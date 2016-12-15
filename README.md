@@ -82,7 +82,7 @@ The code below essentially follows these steps.
 
 If you want, you can ask the user to apply the update, right after an update is downloaded. To do that, implement the delegate methods. Check the Example app to see a working sample.
 
-`react-native-auto-updater` is highly configurable. Here are the options you can configure
+`doctorstrange-updater` is highly configurable. Here are the options you can configure
 
 ``` objective-c
 DoctorStrangeUpdater *updater = [DoctorStrangeUpdater sharedInstance];
