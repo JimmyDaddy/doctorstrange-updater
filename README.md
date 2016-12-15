@@ -1,7 +1,9 @@
 # doctorstrange-updater
-this project based on react-native-auto-updater
+This project is based on `react-native-auto-updater` which only support update `jsbundle` for RN application,
 
-and I make it to support update static resources and incremental update( just for IOS now, later I will make it support Android).
+and I upgraded it to support update static resources and incremental update( just for IOS now, later I will make it support Android).
+
+this is a client SDK, and there is a Server project named [doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`doctorstrange`") or ([doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
 
 ### SDK config
 
