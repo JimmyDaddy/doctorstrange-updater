@@ -1,0 +1,10 @@
+{
+  "name": "doctorstrange-updater",
+  "optionalDependencies": {},
+  "peerDependencies": {
+    "react-native": ">=0.18.0"
+  },
+  "readme": "ERROR: No README data found!",
+  "scripts": {},
+  "version": "0.0.1"
+}
