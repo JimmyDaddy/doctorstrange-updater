@@ -3,7 +3,7 @@ This project is based on `react-native-auto-updater` which only support update `
 
 and I upgraded it to support update static resources and incremental update( just for IOS now, later I will make it support Android).
 
-this is a client SDK, and there is a Server project named [doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`doctorstrange`") or ([doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
+this is a client SDK, and there is a Server project named [doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`") or ([doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
 
 ### SDK config
 
@@ -66,7 +66,7 @@ The code below essentially follows these steps.
   [updater initializeWithUpdateMetadataUrl:[NSURL URLWithString:JS_CODE_METADATA_URL]
                      defaultJSCodeLocation:defaultJSCodeLocation
                defaultMetadataFileLocation:defaultMetadataFileLocation ];
-  [updater setHostnameForRelativeDownloadURLs:@"https://www.aerofs.com"];
+  [updater setHostnameForRelativeDownloadURLs:@"http://www.JimmyDaddy.com"];
   [updater checkUpdate];
 
   NSURL* latestJSCodeLocation = [updater latestJSCodeLocation];
@@ -75,7 +75,7 @@ The code below essentially follows these steps.
   UIViewController *rootViewController = [UIViewController new];
   self.window.rootViewController = rootViewController;
   RCTBridge* bridge = [[RCTBridge alloc] initWithBundleURL:url moduleProvider:nil launchOptions:nil];
-    RCTRootView* rootView = [[RCTRootView alloc] initWithBridge:bridge moduleName:@"ReactNativeAutoUpdater" initialProperties:nil];
+    RCTRootView* rootView = [[RCTRootView alloc] initWithBridge:bridge moduleName:@"UrAPP" initialProperties:nil];
     self.window.rootViewController.view = rootView;
   [self.window makeKeyAndVisible];
   return YES;
