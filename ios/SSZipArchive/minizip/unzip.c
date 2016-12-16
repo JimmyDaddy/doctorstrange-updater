@@ -393,7 +393,7 @@ local unzFile unzOpenInternal(const void *path, zlib_filefunc64_32_def *pzlib_fi
     ZPOS64_T number_entry_CD;
     int err = UNZ_OK;
 
-    if (unz_copyright[0] != ' ')
+    if (munz_copyright[0] != ' ')
         return NULL;
 
     us.filestream = NULL;
