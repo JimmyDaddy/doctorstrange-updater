@@ -1,4 +1,4 @@
-package com.aerofs.reactnativeautoupdater;
+package com.sxc.doctorstrangeupdaterupdater;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -23,71 +23,71 @@ import java.util.Date;
  * @author rahul
  */
 
-public class ReactNativeAutoUpdater {
+public class DoctorStrangeUpdater {
 
-    public static final String RNAU_SHARED_PREFERENCES = "React_Native_Auto_Updater_Shared_Preferences";
-    public static final String RNAU_STORED_VERSION = "React_Native_Auto_Updater_Stored_Version";
-    private final String RNAU_LAST_UPDATE_TIMESTAMP = "React_Native_Auto_Updater_Last_Update_Timestamp";
-    private final String RNAU_STORED_JS_FILENAME = "main.android.jsbundle";
+    public static final String RNAU_SHARED_PREFERENCES = "doctorstrange_Updater_Shared_Preferences";
+    public static final String RNAU_STORED_VERSION = "doctorstrange_Updater_Stored_Version";
+    private final String RNAU_LAST_UPDATE_TIMESTAMP = "doctorstrange_Updater_Last_Update_Timestamp";
+    private final String RNAU_STORED_JS_FILENAME = "doctor.android.jsbundle";
     private final String RNAU_STORED_JS_FOLDER = "JSCode";
 
-    public enum ReactNativeAutoUpdaterFrequency {
+    public enum DoctorStrangeUpdaterFrequency {
         EACH_TIME, DAILY, WEEKLY
     }
 
-    public enum ReactNativeAutoUpdaterUpdateType {
+    public enum DoctorStrangeUpdaterUpdateType {
         MAJOR, MINOR, PATCH
     }
 
-    private static ReactNativeAutoUpdater ourInstance = new ReactNativeAutoUpdater();
+    private static DoctorStrangeUpdater ourInstance = new DoctorStrangeUpdater();
     private String updateMetadataUrl;
     private String metadataAssetName;
-    private ReactNativeAutoUpdaterFrequency updateFrequency = ReactNativeAutoUpdaterFrequency.EACH_TIME;
-    private ReactNativeAutoUpdaterUpdateType updateType = ReactNativeAutoUpdaterUpdateType.MINOR;
+    private DoctorStrangeUpdaterFrequency updateFrequency = DoctorStrangeUpdaterFrequency.EACH_TIME;
+    private DoctorStrangeUpdaterUpdateType updateType = DoctorStrangeUpdaterUpdateType.MINOR;
     private Context context;
     private boolean showProgress = true;
     private String hostname;
     private Interface activity;
 
-    public static ReactNativeAutoUpdater getInstance(Context context) {
+    public static DoctorStrangeUpdater getInstance(Context context) {
         ourInstance.context = context;
         return ourInstance;
     }
 
-    private ReactNativeAutoUpdater() {
+    private DoctorStrangeUpdater() {
     }
 
-    public ReactNativeAutoUpdater setUpdateMetadataUrl(String url) {
+    public DoctorStrangeUpdater setUpdateMetadataUrl(String url) {
         this.updateMetadataUrl = url;
         return this;
     }
 
-    public ReactNativeAutoUpdater setMetadataAssetName(String metadataAssetName) {
+    public DoctorStrangeUpdater setMetadataAssetName(String metadataAssetName) {
         this.metadataAssetName = metadataAssetName;
         return this;
     }
 
-    public ReactNativeAutoUpdater setUpdateFrequency(ReactNativeAutoUpdaterFrequency frequency) {
+    public DoctorStrangeUpdater setUpdateFrequency(DoctorStrangeUpdaterFrequency frequency) {
         this.updateFrequency = frequency;
         return this;
     }
 
-    public ReactNativeAutoUpdater setUpdateTypesToDownload(ReactNativeAutoUpdaterUpdateType updateType) {
+    public DoctorStrangeUpdater setUpdateTypesToDownload(DoctorStrangeUpdaterUpdateType updateType) {
         this.updateType = updateType;
         return this;
     }
 
-    public ReactNativeAutoUpdater setHostnameForRelativeDownloadURLs(String hostnameForRelativeDownloadURLs) {
+    public DoctorStrangeUpdater setHostnameForRelativeDownloadURLs(String hostnameForRelativeDownloadURLs) {
         this.hostname = hostnameForRelativeDownloadURLs;
         return this;
     }
 
-    public ReactNativeAutoUpdater showProgress(boolean progress) {
+    public DoctorStrangeUpdater showProgress(boolean progress) {
         this.showProgress = progress;
         return this;
     }
 
-    public ReactNativeAutoUpdater setParentActivity(Interface activity) {
+    public DoctorStrangeUpdater setParentActivity(Interface activity) {
         this.activity = activity;
         return this;
     }
@@ -101,7 +101,7 @@ public class ReactNativeAutoUpdater {
     }
 
     private boolean shouldCheckForUpdates() {
-        if (this.updateFrequency == ReactNativeAutoUpdaterFrequency.EACH_TIME) {
+        if (this.updateFrequency == DoctorStrangeUpdaterFrequency.EACH_TIME) {
             return true;
         }
 
@@ -286,10 +286,10 @@ public class ReactNativeAutoUpdater {
                 if (!metadataStr.isEmpty()) {
                     metadata = new JSONObject(metadataStr);
                 } else {
-                    ReactNativeAutoUpdater.this.showProgressToast(R.string.auto_updater_no_metadata);
+                    DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_no_metadata);
                 }
             } catch (Exception e) {
-                ReactNativeAutoUpdater.this.showProgressToast(R.string.auto_updater_invalid_metadata);
+                DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_invalid_metadata);
                 e.printStackTrace();
             }
             return metadata;
@@ -297,7 +297,7 @@ public class ReactNativeAutoUpdater {
 
         @Override
         protected void onPostExecute(JSONObject jsonObject) {
-            ReactNativeAutoUpdater.this.verifyMetadata(jsonObject);
+            DoctorStrangeUpdater.this.verifyMetadata(jsonObject);
         }
     }
 
@@ -377,10 +377,10 @@ public class ReactNativeAutoUpdater {
         protected void onPostExecute(String result) {
             mWakeLock.release();
             if (result != null) {
-                ReactNativeAutoUpdater.this.showProgressToast(R.string.auto_updater_downloading_error);
+                DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_downloading_error);
             } else {
-                ReactNativeAutoUpdater.this.updateDownloaded();
-                ReactNativeAutoUpdater.this.showProgressToast(R.string.auto_updater_downloading_success);
+                DoctorStrangeUpdater.this.updateDownloaded();
+                DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_downloading_success);
             }
         }
     }
@@ -389,4 +389,3 @@ public class ReactNativeAutoUpdater {
         void updateFinished();
     }
 }
-

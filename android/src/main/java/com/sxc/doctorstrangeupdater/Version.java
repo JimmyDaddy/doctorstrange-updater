@@ -1,4 +1,4 @@
-package com.aerofs.reactnativeautoupdater;
+package com.sxc.doctorstrangeupdaterupdater;
 
 import android.support.annotation.NonNull;
 

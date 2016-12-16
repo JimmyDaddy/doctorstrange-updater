@@ -1,4 +1,4 @@
-package com.aerofs.reactnativeautoupdater;
+package com.sxc.doctorstrangeupdaterupdater;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;

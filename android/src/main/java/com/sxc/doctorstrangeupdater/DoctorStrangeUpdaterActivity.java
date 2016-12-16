@@ -1,11 +1,11 @@
-package com.aerofs.reactnativeautoupdater;
+package com.sxc.doctorstrangeupdaterupdater;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-import com.aerofs.reactnativeautoupdater.ReactNativeAutoUpdater.ReactNativeAutoUpdaterUpdateType;
-import com.aerofs.reactnativeautoupdater.ReactNativeAutoUpdater.ReactNativeAutoUpdaterFrequency;
+import com.sxc.reactnativeautoupdater.DoctorStrangeUpdater.DoctorStrangeUpdaterUpdateType;
+import com.sxc.reactnativeautoupdater.DoctorStrangeUpdater.DoctorStrangeUpdaterFrequency;
 import com.facebook.react.ReactActivity;
 
 import javax.annotation.Nullable;
@@ -13,15 +13,15 @@ import javax.annotation.Nullable;
 /**
  * @author rahul
  */
-public abstract class ReactNativeAutoUpdaterActivity extends ReactActivity
-        implements ReactNativeAutoUpdater.Interface {
+public abstract class DoctorStrangeUpdaterActivity extends ReactActivity
+        implements DoctorStrangeUpdater.Interface {
 
-    private ReactNativeAutoUpdater updater;
+    private DoctorStrangeUpdater updater;
 
     @Nullable
     @Override
     protected String getJSBundleFile() {
-        updater = ReactNativeAutoUpdater.getInstance(this.getApplicationContext());
+        updater = DoctorStrangeUpdater.getInstance(this.getApplicationContext());
         updater.setMetadataAssetName(this.getMetadataAssetName());
         return updater.getLatestJSCodeLocation();
     }
@@ -30,7 +30,7 @@ public abstract class ReactNativeAutoUpdaterActivity extends ReactActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        updater = ReactNativeAutoUpdater.getInstance(this.getApplicationContext());
+        updater = DoctorStrangeUpdater.getInstance(this.getApplicationContext());
         updater.setUpdateMetadataUrl(this.getUpdateMetadataUrl())
                 .setMetadataAssetName(this.getMetadataAssetName())
                 .setUpdateFrequency(this.getUpdateFrequency())
@@ -49,12 +49,12 @@ public abstract class ReactNativeAutoUpdaterActivity extends ReactActivity
         return null;
     }
 
-    protected ReactNativeAutoUpdaterUpdateType getAllowedUpdateType() {
-        return ReactNativeAutoUpdaterUpdateType.PATCH;
+    protected DoctorStrangeUpdaterUpdateType getAllowedUpdateType() {
+        return DoctorStrangeUpdaterUpdateType.PATCH;
     }
 
-    protected ReactNativeAutoUpdaterFrequency getUpdateFrequency() {
-        return ReactNativeAutoUpdaterFrequency.EACH_TIME;
+    protected DoctorStrangeUpdaterFrequency getUpdateFrequency() {
+        return DoctorStrangeUpdaterFrequency.EACH_TIME;
     }
 
     protected boolean getShowProgress() {
@@ -72,7 +72,7 @@ public abstract class ReactNativeAutoUpdaterActivity extends ReactActivity
                             R.string.auto_updater_downloaded_now,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    ReactNativeAutoUpdaterActivity.this.recreate();
+                                    DoctorStrangeUpdaterActivity.this.recreate();
                                 }
                             }
                     )
