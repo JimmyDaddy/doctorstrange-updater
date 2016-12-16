@@ -75,7 +75,7 @@ The code below essentially follows these steps.
   UIViewController *rootViewController = [UIViewController new];
   self.window.rootViewController = rootViewController;
   RCTBridge* bridge = [[RCTBridge alloc] initWithBundleURL:url moduleProvider:nil launchOptions:nil];
-    RCTRootView* rootView = [[RCTRootView alloc] initWithBridge:bridge moduleName:@"ReactNativeAutoUpdater" initialProperties:nil];
+    RCTRootView* rootView = [[RCTRootView alloc] initWithBridge:bridge moduleName:@"UrAPP" initialProperties:nil];
     self.window.rootViewController.view = rootView;
   [self.window makeKeyAndVisible];
   return YES;
