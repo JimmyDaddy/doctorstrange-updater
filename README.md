@@ -3,7 +3,7 @@ This project is based on `react-native-auto-updater` which only support update `
 
 and I upgraded it to support update static resources and incremental update( just for IOS now, later I will make it support Android).
 
-this is a client SDK, and there is a Server project named [doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`") or ([doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
+this is a client SDK, and there is a server project named [doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`")  (or [doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
 
 ### SDK config
 
