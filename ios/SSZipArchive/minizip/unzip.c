@@ -90,7 +90,7 @@ extern int errno;
 #  define TRYFREE(p) {if (p) free(p); }
 #endif
 
-const char unz_copyright[] =
+const char munz_copyright[] =
     " unzip 1.01 Copyright 1998-2004 Gilles Vollant - http://www.winimage.com/zLibDll";
 
 /* unz_file_info_interntal contain internal info about a file in zipfile*/
@@ -1283,7 +1283,7 @@ extern int ZEXPORT unzReadCurrentFile(unzFile file, voidp buf, unsigned len)
             pfile_in_zip_read_info->stream.avail_out = (uInt)pfile_in_zip_read_info->rest_read_compressed +
                                                        pfile_in_zip_read_info->stream.avail_in;
     } else {
-        
+
         // NOTE:
         // This bit of code seems to try to set the amount of space in the output buffer based on the
         // value stored in the headers stored in the .zip file. However, if those values are incorrect
@@ -1295,18 +1295,18 @@ extern int ZEXPORT unzReadCurrentFile(unzFile file, voidp buf, unsigned len)
         //
         // See: https://github.com/ZipArchive/ziparchive/issues/16
         //
-        
+
         /*
-        
-         
+
+
          FIXME: Upgrading to minizip 1.1 caused issues here, Uncommented the code that was commented before. 11/24/2015
          */
-        
+
         if (len > pfile_in_zip_read_info->rest_read_uncompressed)
             pfile_in_zip_read_info->stream.avail_out = (uInt)pfile_in_zip_read_info->rest_read_uncompressed;
-        
-         
-    
+
+
+
     }
 
     while (pfile_in_zip_read_info->stream.avail_out > 0) {
@@ -1836,4 +1836,3 @@ extern int ZEXPORT unzeof(unzFile file)
         return 1;
     return 0;
 }
-
