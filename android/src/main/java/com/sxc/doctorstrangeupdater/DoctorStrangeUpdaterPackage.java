@@ -1,4 +1,4 @@
-package com.sxc.doctorstrangeupdaterupdater;
+package com.sxc.doctorstrangeupdater;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;
@@ -13,12 +13,12 @@ import java.util.List;
 /**
  * @author rahul
  */
-public class ReactNativeAutoUpdaterPackage implements ReactPackage {
+public class DoctorStrangeUpdaterPackage implements ReactPackage {
 
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
         List<NativeModule> list = new ArrayList<NativeModule>();
-        list.add(new ReactNativeAutoUpdaterModule(reactContext));
+        list.add(new DoctorStrangeUpdaterModule(reactContext));
         return list;
     }
 

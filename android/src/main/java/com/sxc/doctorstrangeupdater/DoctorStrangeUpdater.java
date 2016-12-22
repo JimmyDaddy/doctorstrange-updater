@@ -1,4 +1,4 @@
-package com.sxc.doctorstrangeupdaterupdater;
+package com.sxc.doctorstrangeupdater;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -19,9 +19,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Date;
 
-/**
- * @author rahul
- */
 
 public class DoctorStrangeUpdater {
 

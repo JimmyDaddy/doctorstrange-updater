@@ -1,10 +1,8 @@
-package com.sxc.doctorstrangeupdaterupdater;
+package com.sxc.doctorstrangeupdater;
 
 import android.support.annotation.NonNull;
 
-/**
- * @author rahul
- */
+
 public class Version implements Comparable<Version> {
 
     private String version;

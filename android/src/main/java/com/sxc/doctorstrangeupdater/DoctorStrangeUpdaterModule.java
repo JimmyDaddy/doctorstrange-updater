@@ -1,4 +1,4 @@
-package com.sxc.doctorstrangeupdaterupdater;
+package com.sxc.doctorstrangeupdater;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -11,9 +11,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-/**
- * @author rahul
- */
 public class DoctorStrangeUpdaterModule extends ReactContextBaseJavaModule {
 
     private ReactApplicationContext context;

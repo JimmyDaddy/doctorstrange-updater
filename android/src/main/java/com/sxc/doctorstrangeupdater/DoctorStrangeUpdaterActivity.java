@@ -1,18 +1,17 @@
-package com.sxc.doctorstrangeupdaterupdater;
+package com.sxc.doctorstrangeupdater;
+
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-import com.sxc.reactnativeautoupdater.DoctorStrangeUpdater.DoctorStrangeUpdaterUpdateType;
-import com.sxc.reactnativeautoupdater.DoctorStrangeUpdater.DoctorStrangeUpdaterFrequency;
+import com.sxc.doctorstrangeupdater.DoctorStrangeUpdater.DoctorStrangeUpdaterUpdateType;
+import com.sxc.doctorstrangeupdater.DoctorStrangeUpdater.DoctorStrangeUpdaterFrequency;
 import com.facebook.react.ReactActivity;
 
 import javax.annotation.Nullable;
 
-/**
- * @author rahul
- */
+
 public abstract class DoctorStrangeUpdaterActivity extends ReactActivity
         implements DoctorStrangeUpdater.Interface {
 
