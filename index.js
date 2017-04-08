@@ -106,7 +106,6 @@ class DoctorStrangeUpdater {
                     return response.json();
                 })
                 .then((res) => {
-                    console.log(res);
                     this.newVersion = res.version;
                     this.newContainerVersion = res.minContainerVersion;
                     this.patchId = res.patchId;
