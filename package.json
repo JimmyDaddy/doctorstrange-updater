@@ -4,9 +4,7 @@
   "peerDependencies": {
     "react-native": ">=0.18.0"
   },
-  "readme": "ERROR: No README data found!",
-  "scripts": {},
-  "version": "0.0.1",
+  "version": "0.0.2",
   "dependencies": {
     "react-native-fs": "^2.0.1-rc.2",
     "whatwg-fetch": "^2.0.3"
