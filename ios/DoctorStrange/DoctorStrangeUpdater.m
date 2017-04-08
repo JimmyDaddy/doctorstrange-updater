@@ -1,7 +1,4 @@
-/**
- * this project based on ReactNativeAutoUpdater
 
- */
 
 #import "DoctorStrangeUpdater.h"
 #import "StatusBarNotification.h"
@@ -9,32 +6,48 @@
 #include "bspatch.h"
 #import "RCTLog.h"
 #import "SSZipArchive.h"
+#import "RCTConvert.h"
 
 
+//最近一次检查更新日期
 NSString* const DoctorStrangeUpdaterLastUpdateCheckDate = @"DoctorStrangeUpdater Last Update Check Date";
+//当前版本信息
 NSString* const DoctorStrangeUpdaterCurrentJSCodeMetadata = @"DoctorStrangeUpdater Current JS Code Metadata";
+//上一次版本信息，保存用于回滚
+NSString* const DoctorStrangeUpdaterPreviousJSCodeMetaData = @"DoctorStrangeUpdater previous JS Code Metadata";
+//
+NSString* const DoctorStrangeUpdaterAppVersionFirstOpen = @"DoctorStrangeUpdater app version first open_";
 
-@interface DoctorStrangeUpdater() <NSURLSessionDownloadDelegate, RCTBridgeModule>
+NSString* const PATCH_FILE_NOT_EXIST = @"patch file not exist";
+NSString* const ORIGINAL_FILE_NOT_EXIST = @"origin file not exist";
+NSString* const PATCH_FAIL = @"pacth fail";
+NSString* const UNZIP_FAIL_BUNDLE_NOT_EXIST = @"unzip fail, the bundle not exist";
+NSString* const UNZIP_FAIL = @"unzip fail";
+NSString* const CREATE_DATA_DIR_FAIL = @"create data dir fail";
+NSString* const ZIP_FILE_NOT_EXIST = @"zip file not exist";
+
+
+@interface DoctorStrangeUpdater() <RCTBridgeModule>
 
 @property NSURL* defaultJSCodeLocation;
 @property NSURL* defaultMetadataFileLocation;
 @property NSURL* _latestJSCodeLocation;
-@property NSURL* metadataUrl;
-@property BOOL showProgress;
-@property BOOL allowCellularDataUse;
-@property NSString* hostname;
-@property DoctorStrangeUpdaterUpdateType updateType;
-@property NSDictionary* updateMetadata;
+@property (nonatomic) BOOL showProgress;
+@property (nonatomic) BOOL allowCellularDataUse;//是否允许使用蜂窝数据
 @property BOOL initializationOK;
-@property BOOL downloadPatch;
+
+
 
 @end
 
 @implementation DoctorStrangeUpdater
 
+@synthesize bridge = _bridge;
+
+
 RCT_EXPORT_MODULE()
 
-static DoctorStrangeUpdater *RNAUTOUPDATER_SINGLETON = nil;
+static DoctorStrangeUpdater *UPDATER_SINGLETON = nil;
 static bool isFirstAccess = YES;
 
 + (id)sharedInstance
@@ -42,11 +55,11 @@ static bool isFirstAccess = YES;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         isFirstAccess = NO;
-        RNAUTOUPDATER_SINGLETON = [[super allocWithZone:NULL] init];
-        [RNAUTOUPDATER_SINGLETON defaults];
+        UPDATER_SINGLETON = [[super allocWithZone:NULL] init];
+        [UPDATER_SINGLETON defaults];
     });
 
-    return RNAUTOUPDATER_SINGLETON;
+    return UPDATER_SINGLETON;
 }
 
 #pragma mark - Life Cycle
@@ -72,8 +85,8 @@ static bool isFirstAccess = YES;
 }
 
 - (id) init {
-    if(RNAUTOUPDATER_SINGLETON){
-        return RNAUTOUPDATER_SINGLETON;
+    if(UPDATER_SINGLETON){
+        return UPDATER_SINGLETON;
     }
     if (isFirstAccess) {
         [self doesNotRecognizeSelector:_cmd];
@@ -83,9 +96,8 @@ static bool isFirstAccess = YES;
 }
 
 - (void)defaults {
-    self.showProgress = YES;
-    self.allowCellularDataUse = NO;
-    self.updateType = DoctorStrangeUpdaterMinorUpdate;
+    self.showProgress = NO;
+    self.allowCellularDataUse = YES;
 }
 
 #pragma mark - JS methods
@@ -96,364 +108,337 @@ static bool isFirstAccess = YES;
  */
 - (NSDictionary *)constantsToExport {
     NSDictionary* metadata = [[NSUserDefaults standardUserDefaults] objectForKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
+    NSDate* lastCheckDate = [[NSUserDefaults standardUserDefaults] objectForKey:DoctorStrangeUpdaterLastUpdateCheckDate];
     NSString* version = @"";
+    NSString* description = @"";
+    NSString* minContainerVersion = @"";
+    NSString* minContainerBuidNumber = @"";
     if (metadata) {
         version = [metadata objectForKey:@"version"];
+        description = [metadata objectForKey:@"description"];
+        minContainerVersion = [metadata objectForKey:@"minContainerVersion"];
+        minContainerBuidNumber = [metadata objectForKey:@"minContainerBuidNumber"];
     }
+    
+    NSString* lastCheckDateStr = nil;
+    
+    NSDateFormatter *dateFormatter =[[NSDateFormatter alloc] init];
+    
+    // 设置日期格式
+    [dateFormatter setDateFormat:@"YYYY-mm-dd hh:mm:ss"];
+    
+    if (lastCheckDate) {
+        lastCheckDateStr = [dateFormatter stringFromDate:lastCheckDate];
+    } else {
+        lastCheckDateStr = [dateFormatter stringFromDate:[NSDate date]];
+    }
+    UIDevice *currentDevice = [UIDevice currentDevice];
+    
     return @{
-             @"jsCodeVersion": version
+             @"jsCodeVersion": version?: [NSNull null],
+             @"bundleIdentifier": [[NSBundle mainBundle] bundleIdentifier],
+             @"minContainerBuidNumber": minContainerBuidNumber?: [NSNull null],
+             @"description": description?: [NSNull null],
+             @"minContainerVersion": minContainerVersion?: [NSNull null],
+             @"systemVersion": currentDevice.systemVersion,
+             @"brand": @"Apple",
+             @"buildNumber": [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"],
+             @"appVersion": [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
+             @"currentMetaDataKey": DoctorStrangeUpdaterCurrentJSCodeMetadata,
+             @"previousMetaDataKey": DoctorStrangeUpdaterPreviousJSCodeMetaData,
+             @"currentMetaData": metadata?: [NSNull null],
+             @"lastCheckDateKey": DoctorStrangeUpdaterLastUpdateCheckDate,
+             @"lastrCheckDate": lastCheckDateStr?: [NSNull null],
              };
 }
 
-#pragma mark - initialize Singleton
+/**
+ * 对对应文件夹的文件进行patch操作
+ */
 
-- (void)initializeWithUpdateMetadataUrl:(NSURL*)url defaultJSCodeLocation:(NSURL*)defaultJSCodeLocation defaultMetadataFileLocation:(NSURL*)metadataFileLocation {
-    self.defaultJSCodeLocation = defaultJSCodeLocation;
-    self.defaultMetadataFileLocation = metadataFileLocation;
-    //是否下载差分包
-    self.downloadPatch = NO;
-
-    self.metadataUrl = url;
-
-    NSString* assetsFolder = [[[self libraryDirectory] stringByAppendingPathComponent: @"JSCode"] stringByAppendingPathComponent:@"assets"];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSError *error = nil;
-    BOOL isDir = FALSE;
-    //如果资源文件夹不存在则复制
-    BOOL isDirExist = [fileManager fileExistsAtPath: assetsFolder isDirectory: &isDir];
-    if (!(isDir && isDirExist)) {
-        NSString *bundleAssets = [[[NSBundle mainBundle]resourcePath]stringByAppendingPathComponent:@"assets"];
-        [fileManager copyItemAtPath:bundleAssets toPath:assetsFolder error:&error];
+RCT_EXPORT_METHOD(patch:(NSString *)patchPath
+                  origin:(NSString *)origin
+                  destination:(NSString *)destination
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject
+                  ){
+    if (![[NSFileManager defaultManager] fileExistsAtPath:patchPath]) {
+        reject(PATCH_FILE_NOT_EXIST, @"patch文件不存在.", nil);
+        return;
     }
-
-    [self compareSavedMetadataAgainstContentsOfFile: self.defaultMetadataFileLocation];
+    
+    if (![[NSFileManager defaultManager] fileExistsAtPath:origin]) {
+        reject(ORIGINAL_FILE_NOT_EXIST, @"originfile not exist.", nil);
+        return;
+    }
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:destination]) {
+        [[NSFileManager defaultManager] removeItemAtPath:destination error:nil];
+    }
+    
+    
+    int err = beginPatch([origin UTF8String], [destination UTF8String], [patchPath UTF8String]);
+    if (err) {
+        reject(PATCH_FAIL, @"Patch error", nil);
+        return;
+    } else {
+        resolve(destination);
+        return;
+    }
 }
 
-//设置是否在状态栏显示下载和更新状态
-- (void)showProgress: (BOOL)progress {
-    self.showProgress = progress;
+/**
+ * 解压文件到指定文件夹，文件夹不存在则创建，否则返回bundle所在位置，***bundle名字约定为doctor.jsbundle***
+ **/
+RCT_EXPORT_METHOD(uzipFileAtPath:(NSString*)filePath
+                  destinationPath:(NSString*)destinationPath
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject
+                  ){
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    //判断需要解压的文件是否存在
+    if ([fileManager fileExistsAtPath:filePath]) {
+        //判断目标文件夹是否存在，不存在则创建
+        if ([fileManager fileExistsAtPath:destinationPath] == NO) {
+            NSError *error;
+            if ([fileManager createDirectoryAtPath:destinationPath
+                        withIntermediateDirectories:YES
+                                         attributes:nil
+                                              error:&error] == NO)
+            {
+                NSLog(@"Create directory error: %@", error);
+                reject(CREATE_DATA_DIR_FAIL, @"create data dir fail", error);
+                return;
+            }
+        }
+        //进行解压
+        if ([SSZipArchive unzipFileAtPath:filePath toDestination: destinationPath]) {
+            NSString *bundlePath = [destinationPath stringByAppendingPathComponent:@"doctor.jsbundle"];
+            //解压成功后判断文件是否存在，存在则返回文件路径
+            if ([fileManager fileExistsAtPath: bundlePath]) {
+                resolve(bundlePath);
+                return;
+            } else {
+                reject(UNZIP_FAIL_BUNDLE_NOT_EXIST, @"bundle not exist", nil);
+                return;
+            }
+        } else {
+            reject(UNZIP_FAIL, @"unzip fail", nil);
+            return;
+        }
+
+    } else {
+        reject(ZIP_FILE_NOT_EXIST, @"zip not exist", nil);
+    }
 }
 
-- (void)allowCellularDataUse: (BOOL)cellular {
+RCT_EXPORT_METHOD(reload:(NSString*)bundlePath){
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            [_bridge setValue:[NSURL fileURLWithPath:bundlePath] forKey:@"bundleURL"];
+            [_bridge reload];
+        } @catch (NSException *exception) {
+            NSLog(@"%@", exception.reason);
+        } @finally {
+            
+        }
+        
+    });
+}
+
+
+RCT_EXPORT_METHOD(setMetaData:(NSDictionary*) obj
+                  key: (NSString*) key){
+    @try {
+        [[NSUserDefaults standardUserDefaults] setObject:obj forKey:key];
+    } @catch (NSException *exception) {
+        NSLog(@"set nata data fail: %@", exception.reason);
+    } @finally {
+        
+    }
+}
+
+RCT_EXPORT_METHOD(allowCellularDataUse: (BOOL)cellular){
     self.allowCellularDataUse = cellular;
 }
 
-//设置最小版本号对比
-- (void)downloadUpdatesForType:(DoctorStrangeUpdaterUpdateType)type {
-    self.updateType = type;
+RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
+    self.showProgress = showProgress;
 }
+
+
+#pragma mark - initialize Singleton
+
+- (void)backToPreVersion
+{
+    NSLog(@"hkjhkjhkjhk");
+}
+
+- (void)initializeWithUpdateMetadataUrl:(NSURL*)defaultJSCodeLocation defaultMetadataFileLocation:(NSURL*)metadataFileLocation {
+    self.defaultJSCodeLocation = defaultJSCodeLocation;
+    self.defaultMetadataFileLocation = metadataFileLocation;
+    //初始化app第一次打开
+    [self initAppVersionFirstOpen];
+    [self compareSavedMetadataAgainstContentsOfFile: self.defaultMetadataFileLocation];
+}
+
 
 - (NSURL*)latestJSCodeLocation {
     NSString* latestJSCodeURLString = [[[self libraryDirectory] stringByAppendingPathComponent:@"JSCode"] stringByAppendingPathComponent:@"doctor.jsbundle"];
     if ([[NSFileManager defaultManager] fileExistsAtPath:latestJSCodeURLString]) {
-        self._latestJSCodeLocation = [NSURL URLWithString:[NSString stringWithFormat:@"file://%@", latestJSCodeURLString]];
+        self._latestJSCodeLocation = [NSURL fileURLWithPath: latestJSCodeURLString];
         return self._latestJSCodeLocation;
     } else {
         return self.defaultJSCodeLocation;
     }
 }
 
-//设置主要域名
-- (void)setHostnameForRelativeDownloadURLs:(NSString *)hostname {
-    self.hostname = hostname;
-}
-
-- (void)compareSavedMetadataAgainstContentsOfFile: (NSURL*)metadataFileLocation {
-    //本地版本文件
-    NSData* fileMetadata = [NSData dataWithContentsOfURL: metadataFileLocation];
-    if (!fileMetadata) {
-        NSLog(@"[DoctorStrangeUpdater]: Make sure you initialize RNAU with a metadata file.");
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
-        }
-        self.initializationOK = NO;
-        return;
-    }
-    NSError *error;
-    //格式化为字典
-    NSDictionary* localMetadata = [NSJSONSerialization JSONObjectWithData:fileMetadata options:NSJSONReadingAllowFragments error:&error];
-    if (error) {
-        NSLog(@"[DoctorStrangeUpdater]: Initialized RNAU with a WRONG metadata file.");
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
-        }
-        self.initializationOK = NO;
-        return;
-    }
-    NSLog(@"数据格式化完成");
-
-    NSDictionary* savedMetadata = [[NSUserDefaults standardUserDefaults] objectForKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
-    if (!savedMetadata) {
-        [[NSUserDefaults standardUserDefaults] setObject:localMetadata forKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
-    }
-    else {
-        NSLog(@"data");
-        //重新启动时加载新版本bundle
-        if ([[savedMetadata objectForKey:@"version"] compare:[localMetadata objectForKey:@"version"] options:NSNumericSearch] == NSOrderedAscending) {
-            NSData* data = [NSData dataWithContentsOfURL:self.defaultJSCodeLocation];
-            NSString* filename = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], @"doctor.jsbundle"];
-
-            if ([data writeToFile:filename atomically:YES]) {
-                [[NSUserDefaults standardUserDefaults] setObject:localMetadata forKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
-            }
-        }
-    }
-    self.initializationOK = YES;
-}
 
 
-
-#pragma mark - Check updates
-
-//检查更新
-- (void)performUpdateCheck {
-    if (!self.initializationOK) {
-        return;
-    }
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:NSLocalizedString(@"检查更新中.", nil) backgroundColor:[StatusBarNotification infoColor] autoHide:YES];
-        }
-    });
-
-    //获取当前metadata信息
-    NSDictionary* currentMetadata = [[NSUserDefaults standardUserDefaults] objectForKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
-    NSString* checkUrlStr = [self.metadataUrl absoluteString];
-    NSLog(@"检查url: %@", checkUrlStr);
-
-    if (currentMetadata) {
-        NSLog(@"生成url: %@", checkUrlStr);
-        @try {
-            NSNumber* oldversionId = [currentMetadata objectForKey:@"versionId"];
-            NSString* oldversion = [currentMetadata objectForKey:@"version"];
-            NSString *normal = @"&versionId=";
-            //设置请求参数，将下载版本告知
-            NSNumberFormatter* numberFormatter = [[NSNumberFormatter alloc] init];
-            NSString* versionStr = [numberFormatter stringFromNumber:oldversionId];
-            NSString *bodyStr = [normal stringByAppendingString:versionStr];
-            NSString* newcheckUrl = [checkUrlStr stringByAppendingString:[bodyStr stringByAppendingString:[@"&version=" stringByAppendingString: oldversion]]];
-            checkUrlStr = newcheckUrl;
-        } @catch (NSException *exception) {
-            NSLog(@"exception %@, %@", exception.name, exception.reason);
-        } @finally {
-
-        }
-    }
-
-    NSData* data = [NSData dataWithContentsOfURL: [NSURL URLWithString: checkUrlStr]];
-    if (!data) {
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:NSLocalizedString(@"Received no Update Metadata. Aborted.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
-        }
-        return;
-    }
-    NSError* error;
-    self.updateMetadata = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:&error];
-    if (error) {
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata JSON. Update aborted.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
-        }
-        return;
-    }
-    NSString* versionToDownload = [self.updateMetadata objectForKey:@"version"];
-    NSNumber* versionId = [self.updateMetadata objectForKey:@"versionId"];
-    NSString* minContainerVersion = [self.updateMetadata objectForKey:@"minContainerVersion"];
-    NSNumber* patchId = [self.updateMetadata objectForKey:@"patchId"];
-    //这里设置服务器地址
-    NSString* serverUrl = [self.updateMetadata objectForKey:@"serverUrl"];
-
-    if ([self isBlankString:serverUrl] == NO) {
-        [self setHostnameForRelativeDownloadURLs: serverUrl];
-    }
-
-    BOOL isRelative = [[self.updateMetadata objectForKey:@"isRelative"] boolValue];
-
-    if ([self shouldDownloadUpdateWithVersion:versionToDownload forMinContainerVersion:minContainerVersion]) {
-        NSLog(@"开始下载更新数据");
-
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:NSLocalizedString(@"下载更新中.", nil) backgroundColor:[StatusBarNotification infoColor] autoHide:YES];
-        }
-        if (isRelative) {
-            //            urlToDownload = [self.hostname stringByAppendingString:urlToDownload];
-            NSLog(@"开始特么下载更新数据");
-            
-            /**
-             * 原生更新会有两种情况出现，这是在添加了静态文件更新以及增量更新后会出现的问题，
-             *
-             **/
-            //检查document文件夹里面是否存在上一版本的zip，如果存在则代表是用户在原来的app基础上进行下载更新的，否则就是在卸载app之后进行更新的
-            //获取上一把版本的zip名字
-            NSString* filename = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], @"doctor.zip"];
-            
-            //检查该文件是否存在
-            if ([[NSFileManager defaultManager] fileExistsAtPath:filename] == YES) {
-                //如果存在，且差量id存在， 则可以直接下载差量patch
-                if([self isBlankNumber:patchId] == NO){
-                    NSLog(@"下载差分包");
-                    [self startDownloadingUpdateFromPatchId: patchId];
-                    self.downloadPatch = YES;
-                } else {
-                    NSLog(@"下载整包");
-                    [self startDownloadingUpdateFromVersion: versionToDownload];
-                    self.downloadPatch = NO;
-                }
-            } else {
-                //否则下载整包
-                NSLog(@"下载整包");
-                [self startDownloadingUpdateFromVersion: versionToDownload];
-                self.downloadPatch = NO;
-            };
-        } else {
-            NSString* urlToDownload = [self.updateMetadata objectForKey:@"url"];
-            [self startDownloadingUpdateFromURLAbsolutely:urlToDownload];
-
-        }
-    }
-    else {
-        if (self.showProgress) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [StatusBarNotification showWithMessage:NSLocalizedString(@"已全部更新", nil) backgroundColor:[StatusBarNotification successColor] autoHide:YES];
-            });
-        }
-    }
-}
-
-//判断是否应该下载更新数据
-- (BOOL)shouldDownloadUpdateWithVersion:(NSString*)version forMinContainerVersion:(NSString*)minContainerVersion {
-    NSLog(@"判断是否应该下载更新数据");
-
-    BOOL shouldDownload = NO;
-
-    /*
-     * First check for the version match. If we have the update version, then don't download.
-     * Also, check what kind of updates the user wants.
-     */
-    NSDictionary* currentMetadata = [[NSUserDefaults standardUserDefaults] objectForKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
-    if (currentMetadata == [NSNull null] || !currentMetadata) {
-        shouldDownload = YES;
-    }
-    else {
-        NSString* currentVersion = [currentMetadata objectForKey:@"version"];
-
-        int currentMajor, currentMinor, currentPatch, updateMajor, updateMinor, updatePatch;
-        NSArray* currentComponents = [currentVersion componentsSeparatedByString:@"."];
-        if (currentComponents.count == 0) {
-            return NO;
-        }
-        currentMajor = [currentComponents[0] intValue];
-        if (currentComponents.count >= 2) {
-            currentMinor = [currentComponents[1] intValue];
-        }
-        else {
-            currentMinor = 0;
-        }
-        if (currentComponents.count >= 3) {
-            currentPatch = [currentComponents[2] intValue];
-        }
-        else {
-            currentPatch = 0;
-        }
-        NSArray* updateComponents = [version componentsSeparatedByString:@"."];
-        updateMajor = [updateComponents[0] intValue];
-        if (updateComponents.count >= 2) {
-            updateMinor = [updateComponents[1] intValue];
-        }
-        else {
-            updateMinor = 0;
-        }
-        if (updateComponents.count >= 3) {
-            updatePatch = [updateComponents[2] intValue];
-        }
-        else {
-            updatePatch = 0;
-        }
-
-        switch (self.updateType) {
-            case DoctorStrangeUpdaterMajorUpdate: {
-                if (currentMajor < updateMajor) {
-                    shouldDownload = YES;
-                }
-                break;
-            }
-            case DoctorStrangeUpdaterMinorUpdate: {
-                if (currentMajor < updateMajor || (currentMajor == updateMajor && currentMinor < updateMinor)) {
-                    shouldDownload = YES;
-                }
-
-                break;
-            }
-            case DoctorStrangeUpdaterPatchUpdate: {
-                if (currentMajor < updateMajor || (currentMajor == updateMajor && currentMinor < updateMinor)
-                    || (currentMajor == updateMajor && currentMinor == updateMinor && currentPatch < updatePatch)) {
-                    shouldDownload = YES;
-                }
-                break;
-            }
-            default: {
-                shouldDownload = YES;
-                break;
-            }
-        }
-    }
-
-
-    NSString* containerVersion = [self containerVersion];
-    if (shouldDownload && [containerVersion compare:minContainerVersion options:NSNumericSearch] != NSOrderedAscending) {
-        shouldDownload = YES;
-    }
-    else {
-        shouldDownload = NO;
-    }
-
-    return shouldDownload;
-}
+#pragma mark - private
 
 /**
  *
- */
-- (void)checkUpdate {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (self.metadataUrl) {
-            [self performUpdateCheck];
-            [self setLastUpdateCheckPerformedOnDate: [NSDate date]];
-        }
-        else {
-            NSLog(@"[DoctorStrangeUpdater]: Please make sure you have set the Update Metadata URL");
-        }
-    });
+ *初始化app当前原生版本是否第一次打开
+ **/
+- (void) initAppVersionFirstOpen{
+    //获取App版本号
+    NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleVersionKey];
+    NSString *flag = [DoctorStrangeUpdaterAppVersionFirstOpen stringByAppendingString: version];
+    NSNumber *tmp =  [[NSUserDefaults standardUserDefaults] objectForKey:flag];
+    if (nil == tmp) {
+        //不存在标识，说明app是第一次打开，因此标记立即并持久化，说明是当前版本app第一次打开
+        [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:flag];
+        [[NSUserDefaults standardUserDefaults] synchronize]; //立即持久化 － 因为用户终止程序时不会保存
+    }
+
 }
 
-- (void)checkUpdateDaily {
-    /*
-     On app's first launch, lastVersionCheckPerformedOnDate isn't set.
-     Avoid false-positive fulfilment of second condition in this method.
-     Also, performs version check on first launch.
-     */
-    if (![self lastUpdateCheckPerformedOnDate]) {
-        [self checkUpdate];
-    }
-
-    // If daily condition is satisfied, perform version check
-    if ([self numberOfDaysElapsedBetweenLastVersionCheckDate] > 1) {
-        [self checkUpdate];
+/**
+ * 判断当前版本app是否第一次打开
+ **/
+-(BOOL) currentVersionFirstOpen{
+    NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleVersionKey];
+    NSString *flag = [DoctorStrangeUpdaterAppVersionFirstOpen stringByAppendingString: version];
+    NSNumber *temp =  [[NSUserDefaults standardUserDefaults] objectForKey:flag];
+    if (nil == temp || temp == [NSNumber numberWithBool:YES]) {
+        return YES;
+    } else {
+        return NO;
     }
 }
+/**
+ *初始化完成后代表不是第一次打开该app
+ **/
+-(void) afterFirstOpenInit{
+    //获取App版本号
+    NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleVersionKey];
+    NSString *flag = [DoctorStrangeUpdaterAppVersionFirstOpen stringByAppendingString: version];
+    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:NO] forKey:flag];
+    [[NSUserDefaults standardUserDefaults] synchronize]; //立即持久化 － 因为用户终止程序时不会保存
 
-- (void)checkUpdateWeekly {
-    /*
-     On app's first launch, lastVersionCheckPerformedOnDate isn't set.
-     Avoid false-positive fulfilment of second condition in this method.
-     Also, performs version check on first launch.
-     */
-    if (![self lastUpdateCheckPerformedOnDate]) {
-        [self checkUpdate];
+}
+/**
+ *初始化文件资源信息
+ **/
+- (void)compareSavedMetadataAgainstContentsOfFile: (NSURL*)metadataFileLocation {
+    //如果app是第一次打开，则进行资源初始化操作
+    if ([self currentVersionFirstOpen]) {
+        //删除上一版本的资源
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([self removeSources]) {
+                if([self copyResource:metadataFileLocation]){
+                    [self afterFirstOpenInit];
+                }
+            }
+        });
+    } else {
+        //否则app在该版本就不是第一次打开，直接初始化完成
+        self.initializationOK = YES;
+    }
+}
+/**
+ *删除资源文件
+ **/
+-(BOOL) removeSources{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString* assetsFolder = [[[self libraryDirectory] stringByAppendingPathComponent: @"JSCode"] stringByAppendingPathComponent:@"assets"];
+    NSString* zipbundlePath =[[[self libraryDirectory] stringByAppendingPathComponent: @"JSCode"] stringByAppendingPathComponent:@"doctor.zip"];
+
+    NSError *error;
+
+    BOOL isDir = FALSE;
+    BOOL isDirExist = [fileManager fileExistsAtPath: assetsFolder isDirectory: &isDir];
+    if (isDir && isDirExist) {
+        [fileManager removeItemAtPath:assetsFolder error:&error];
+    }
+    if (error) {
+        return NO;
+    } else {
+        if([fileManager fileExistsAtPath:zipbundlePath]){
+            [fileManager removeItemAtPath:zipbundlePath error:&error];
+        }
+        if (error) {
+            return NO;
+        }
+        return YES;
+    }
+    
+}
+
+/**
+ *拷贝必要资源
+ **/
+-(BOOL) copyResource: (NSURL*)metadataFileLocation{
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    NSString* assetsFolder = [[[self libraryDirectory] stringByAppendingPathComponent: @"JSCode"] stringByAppendingPathComponent:@"assets"];
+    BOOL isDir = FALSE;
+    //如果资源文件夹不存在则复制
+    BOOL isDirExist = [fileManager fileExistsAtPath: assetsFolder isDirectory: &isDir];
+    NSError *error = nil;
+    if (!(isDir && isDirExist)) {
+        NSString *bundleAssets = [[[NSBundle mainBundle]resourcePath]stringByAppendingPathComponent:@"assets"];
+        if([fileManager copyItemAtPath:bundleAssets toPath:assetsFolder error:&error] == NO){
+            self.initializationOK = NO;
+            return NO;
+        };
     }
 
-    // If weekly condition is satisfied, perform version check
-    if ([self numberOfDaysElapsedBetweenLastVersionCheckDate] > 7) {
-        [self checkUpdate];
+
+    NSData* data = [NSData dataWithContentsOfURL:self.defaultJSCodeLocation];
+    NSString* filename = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], @"doctor.jsbundle"];
+    
+    if ([data writeToFile:filename atomically:YES]) {
+        //首先拿到打包文件中的本地版本信息文件，开发者务必要确定该文件的正确性
+        NSData* fileMetadata = [NSData dataWithContentsOfURL: metadataFileLocation];
+        if (!fileMetadata) {
+            NSLog(@"[DoctorStrangeUpdater]: Make sure you initialize  with a metadata file.");
+            if (self.showProgress) {
+                [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
+            }
+            self.initializationOK = NO;
+            return NO;
+        }
+        NSError *error;
+        //将本地版本文件格式化为字典
+        NSDictionary* localMetadata = [NSJSONSerialization JSONObjectWithData:fileMetadata options:NSJSONReadingAllowFragments error:&error];
+        if (error) {
+            NSLog(@"[DoctorStrangeUpdater]: Initialized with a WRONG metadata file.");
+            if (self.showProgress) {
+                [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
+            }
+            self.initializationOK = NO;
+            return NO;
+        }
+
+        [[NSUserDefaults standardUserDefaults] setObject:localMetadata forKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
+        return YES;
     }
+    self.initializationOK = NO;
+    return NO;
+
 }
 
 /**
@@ -464,6 +449,12 @@ static bool isFirstAccess = YES;
              origin:(NSString *)origin
         destination:(NSString *)destination
 {
+    if (self.showProgress) {
+        [StatusBarNotification showWithMessage:NSLocalizedString(@"初始化新数据中", nil)
+                               backgroundColor:[StatusBarNotification errorColor]
+                                      autoHide:YES];
+    }
+
     if (![[NSFileManager defaultManager] fileExistsAtPath:patchPath]) {
         if (self.showProgress) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"patch文件不存在.", nil)
@@ -472,7 +463,7 @@ static bool isFirstAccess = YES;
         }
         return NO;
     }
-
+    
     if (![[NSFileManager defaultManager] fileExistsAtPath:origin]) {
         if (self.showProgress) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"originfile not exist.", nil)
@@ -481,13 +472,13 @@ static bool isFirstAccess = YES;
         }
         return NO;
     }
-
+    
     if ([[NSFileManager defaultManager] fileExistsAtPath:destination]) {
         [[NSFileManager defaultManager] removeItemAtPath:destination error:nil];
     }
-
-
-
+    
+    
+    
     int err = beginPatch([origin UTF8String], [destination UTF8String], [patchPath UTF8String]);
     if (err) {
         return NO;
@@ -496,177 +487,6 @@ static bool isFirstAccess = YES;
 }
 
 
-#pragma mark - private
-
-
-
-
-/**
- * 判断是否空字符串
- * blank string judge
- **/
-- (BOOL) isBlankString:(NSString *)string {
-    if (string == nil || string == NULL) {
-        return YES;
-    }
-    if ([string isKindOfClass:[NSNull class]]) {
-        return YES;
-    }
-    if ([[string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length]==0) {
-        return YES;
-    }
-    return NO;
-}
-
-/**
- * 数字是否为空
- */
--(BOOL) isBlankNumber:(NSNumber *)number{
-    if (number == nil || number == NULL) {
-        return YES;
-    }
-
-    if ([number isKindOfClass:[NSNull class]]) {
-        return YES;
-    }
-
-    id temp = number;
-
-    if ([temp isKindOfClass:[NSNull class]]) {
-        return YES;
-    }
-
-    return NO;
-}
-
-/**
- * @Author Jimmy
- * 相对路径根据参数下载文件
- * download bundle from relative path
- **/
-- (void)startDownloadingUpdateFromVersion:(NSString*)version{
-
-
-    NSString *normal = @"version=";
-    //设置请求参数，将下载版本告知
-    NSString *bodyStr = [normal stringByAppendingString:version];
-
-    NSString *identifier = [[NSBundle mainBundle] bundleIdentifier];
-
-    NSString *idParamStr = [@"&bundleId=" stringByAppendingString:identifier];
-
-    bodyStr = [bodyStr stringByAppendingString:idParamStr];
-    NSURL *url = [NSURL URLWithString:self.hostname];
-
-    NSMutableURLRequest *request =  [NSMutableURLRequest requestWithURL:url
-                                                            cachePolicy:NSURLRequestReloadIgnoringLocalCacheData //忽略缓存直接下载
-                                                        timeoutInterval:10];//请求这个地址， timeoutInterval:10 设置为10s超时：请求时间超过10s会被认为连接不上，连接超时
-    [request setHTTPMethod: @"POST"];//使用post传参
-
-    [request setHTTPBody:[bodyStr dataUsingEncoding:NSUTF8StringEncoding]];
-
-
-
-    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-    sessionConfig.allowsCellularAccess = self.allowCellularDataUse;
-    sessionConfig.timeoutIntervalForRequest = 60.0;
-    sessionConfig.timeoutIntervalForResource = 60.0;
-    sessionConfig.HTTPMaximumConnectionsPerHost = 1;
-
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
-                                                          delegate:self
-                                                     delegateQueue:nil];
-
-    NSURLSessionDownloadTask* task = [session downloadTaskWithRequest:request];
-
-    [task resume];
-}
-
--(void)startDownloadingUpdateFromPatchId:(NSNumber*)patchId{
-    NSLog(@"新版本PatchID %@", patchId);
-
-    NSString *normal = @"patchId=";
-    //设置请求参数，将下载版本告知
-    NSNumberFormatter* numberFormatter = [[NSNumberFormatter alloc] init];
-    NSString* versionStr = [numberFormatter stringFromNumber:patchId];
-    NSString *bodyStr = [normal stringByAppendingString:versionStr];
-    NSString *identifier = [[NSBundle mainBundle] bundleIdentifier];
-    NSString *idParamStr = [@"&bundleId=" stringByAppendingString:identifier];
-    bodyStr = [bodyStr stringByAppendingString:idParamStr];
-    NSLog(@"请求参数 %@", bodyStr);
-
-    NSURL *url = [NSURL URLWithString:self.hostname];
-    NSLog(@"服务器地址 %@", url);
-
-    NSMutableURLRequest *request =  [NSMutableURLRequest requestWithURL:url
-                                                            cachePolicy:NSURLRequestReloadIgnoringLocalCacheData //忽略缓存直接下载
-                                                        timeoutInterval:10];//请求这个地址， timeoutInterval:10 设置为10s超时：请求时间超过10s会被认为连接不上，连接超时
-    [request setHTTPMethod: @"POST"];//使用post传参
-
-    [request setHTTPBody:[bodyStr dataUsingEncoding:NSUTF8StringEncoding]];
-
-
-
-    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-    sessionConfig.allowsCellularAccess = self.allowCellularDataUse;
-    sessionConfig.timeoutIntervalForRequest = 60.0;
-    sessionConfig.timeoutIntervalForResource = 60.0;
-    sessionConfig.HTTPMaximumConnectionsPerHost = 1;
-
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
-                                                          delegate:self
-                                                     delegateQueue:nil];
-
-    NSURLSessionDownloadTask* task = [session downloadTaskWithRequest:request];
-
-    [task resume];
-
-}
-
-/**
- * @Author Jimmy
- * 绝对路径直接根据URL下载文件
- * download bundle from absolute path
- **/
-- (void)startDownloadingUpdateFromURLAbsolutely:(NSString*)urlString{
-
-    NSURL* url = [NSURL URLWithString:urlString];
-
-    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-    sessionConfig.allowsCellularAccess = self.allowCellularDataUse;
-    sessionConfig.timeoutIntervalForRequest = 60.0;
-    sessionConfig.timeoutIntervalForResource = 60.0;
-    sessionConfig.HTTPMaximumConnectionsPerHost = 1;
-
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
-                                                          delegate:self
-                                                     delegateQueue:nil];
-
-    NSURLSessionDownloadTask* task = [session downloadTaskWithURL:url];
-    [task resume];
-}
-
-
-- (NSUInteger)numberOfDaysElapsedBetweenLastVersionCheckDate {
-    NSCalendar *currentCalendar = [NSCalendar currentCalendar];
-    NSDateComponents *components = [currentCalendar components:NSCalendarUnitDay
-                                                      fromDate:[self lastUpdateCheckPerformedOnDate]
-                                                        toDate:[NSDate date]
-                                                       options:0];
-    return [components day];
-}
-
-- (NSDate*)lastUpdateCheckPerformedOnDate {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:DoctorStrangeUpdaterLastUpdateCheckDate];
-}
-
-- (void)setLastUpdateCheckPerformedOnDate: date {
-    [[NSUserDefaults standardUserDefaults] setObject:date forKey:DoctorStrangeUpdaterLastUpdateCheckDate];
-}
-
-- (NSString*)containerVersion {
-    return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
-}
 
 - (NSString*)libraryDirectory {
     return [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject];
@@ -696,129 +516,4 @@ static bool isFirstAccess = YES;
     }
     return filePathAndDirectory;
 }
-
-- (NSString*)createTempDirectory: (NSString*)fileName {
-    NSString* libraryDirectory = [self libraryDirectory];
-    NSString *filePathAndDirectory = [libraryDirectory stringByAppendingPathComponent: fileName];
-    NSError *error;
-
-    NSFileManager* fileManager = [NSFileManager defaultManager];
-
-    BOOL isDir;
-    if ([fileManager fileExistsAtPath:filePathAndDirectory isDirectory:&isDir]) {
-        if (isDir) {
-            return filePathAndDirectory;
-        }
-    }
-
-    if (![fileManager createDirectoryAtPath:filePathAndDirectory
-                withIntermediateDirectories:YES
-                                 attributes:nil
-                                      error:&error])
-    {
-        NSLog(@"Create directory error: %@", error);
-        return nil;
-    }
-    return filePathAndDirectory;
-}
-
-#pragma mark - NSURLSessionDownloadDelegate
-
-- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didWriteData:(int64_t)bytesWritten totalBytesWritten:(int64_t)totalBytesWritten totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
-    if (totalBytesExpectedToWrite == NSURLSessionTransferSizeUnknown) {
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:[NSString stringWithFormat:NSLocalizedString(@"下载更新中 - %@", nil),
-                                                    [NSByteCountFormatter stringFromByteCount:totalBytesWritten
-                                                                                   countStyle:NSByteCountFormatterCountStyleFile]]
-                                   backgroundColor:[StatusBarNotification infoColor]
-                                          autoHide:NO];
-        }
-    }
-    else {
-        if (self.showProgress) {
-            [StatusBarNotification showWithMessage:[NSString stringWithFormat:NSLocalizedString(@"下载更新中 - %d%%", nil), (int)(totalBytesWritten/totalBytesExpectedToWrite) * 100]
-                                   backgroundColor:[StatusBarNotification infoColor]
-                                          autoHide:NO];
-        }
-    }
-}
-
--(void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location {
-    if (self.showProgress) {
-        [StatusBarNotification showWithMessage:NSLocalizedString(@"下载完成.", nil)
-                               backgroundColor:[StatusBarNotification successColor]
-                                      autoHide:YES];
-    }
-    NSError* error;
-    //从下载的临时文件中读取数据到NSDATA
-    NSData* data = [NSData dataWithContentsOfURL:location];
-    //判断NSData是否为空，避免出现下载失误造成空白文件的问题
-    if (data) {
-        //文件不为空则写入文件到原本的main.jsbundle中
-        BOOL updateMetaData = NO;
-        NSString* filename = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], @"doctor.zip"];
-        @try {
-            if (self.downloadPatch == YES) {
-                RCTLogInfo(@"downLoadPatch");
-                if (self.showProgress) {
-                    [StatusBarNotification showWithMessage:NSLocalizedString(@"更新差分包.", nil)
-                                           backgroundColor:[StatusBarNotification successColor]
-                                                  autoHide:YES];
-                }
-                NSString* patchFileTempName = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], @"temp.patch"];
-                NSString* tempFileName = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], @"temp.zip"];
-                if ([data writeToFile:patchFileTempName atomically:YES]) {
-
-                    NSData* originData = [NSData dataWithContentsOfURL: [NSURL URLWithString:[NSString stringWithFormat:@"file://%@", filename]]];
-
-                    if (originData && [originData writeToFile:tempFileName atomically:YES]) {
-                        updateMetaData = [self bsdiffPatch: (NSString*)patchFileTempName origin:(NSString*)tempFileName destination:(NSString*)filename];
-                    }
-                }
-            } else {
-                RCTLogInfo(@"downLoadbundle");
-                updateMetaData = [data writeToFile:filename atomically:YES];
-            }
-            if (updateMetaData == YES) {
-                if (self.showProgress) {
-                    [StatusBarNotification showWithMessage:NSLocalizedString(@"初始化完成,应用更新.", nil)
-                                           backgroundColor:[StatusBarNotification successColor]
-                                                  autoHide:YES];
-                }
-
-                if([SSZipArchive unzipFileAtPath:filename toDestination: [self createCodeDirectory]]){
-                    NSString* bundleName = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], @"doctor.jsbundle"];
-                    if ([[NSFileManager defaultManager] fileExistsAtPath:bundleName]) {
-                        //写入文件成功后更新文件版本信息
-                        [[NSUserDefaults standardUserDefaults] setObject:self.updateMetadata forKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
-                        //提示应用新版本
-                        if ([self.delegate respondsToSelector:@selector(DoctorStrangeUpdater_updateDownloadedToURL:)]) {
-                            [self.delegate DoctorStrangeUpdater_updateDownloadedToURL:[NSURL URLWithString:[NSString stringWithFormat:@"file://%@", bundleName]]];
-                        }
-                    }
-
-                };
-                self.downloadPatch = NO;
-            }
-            else {
-                RCTLogInfo(@"[DoctorStrangeUpdater]: Update save failed - %@.", error.localizedDescription);
-                //                NSLog(@"[DoctorStrangeUpdater]: Update save failed - %@.", error.localizedDescription);
-            }
-
-        } @catch (NSException *exception) {
-            RCTLogInfo(@"[DoctorStrangeUpdater]: Update save failed - %@. - %@", exception.name, exception.reason);
-            //            NSLog(@"[DoctorStrangeUpdater]: Update save failed - %@. - %@", exception.name, exception.reason);
-        } @finally {
-
-        }
-
-    }
-}
-
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    if (error) {
-        NSLog(@"[DoctorStrangeUpdater]: %@", error.localizedDescription);
-    }
-}
-
 @end

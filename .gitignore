@@ -1,0 +1,7 @@
+*.iml
+build/
+.idea/
+npm-debug.log
+.gradle/
+local.properties
+node_modules/.bin/

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.AsyncTask;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.widget.Toast;
 
@@ -258,9 +259,12 @@ public class DoctorStrangeUpdater {
 
     private void showProgressToast(int message) {
         if (this.showProgress) {
+            if (Looper.myLooper() == null)
+                Looper.prepare();
             int duration = Toast.LENGTH_SHORT;
             Toast toast = Toast.makeText(context, message, duration);
             toast.show();
+//            Looper.loop();
         }
     }
 
