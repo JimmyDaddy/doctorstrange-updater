@@ -4,9 +4,24 @@
   "peerDependencies": {
     "react-native": ">=0.18.0"
   },
-  "version": "0.0.2",
+  "version": "0.0.4",
   "dependencies": {
     "react-native-fs": "^2.0.1-rc.2",
     "whatwg-fetch": "^2.0.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JimmyDaddy/doctorstrange-updater.git"
+  },
+  "keywords": [
+    "react-native",
+    "hot update",
+    "hot fix"
+  ],
+  "author": "jimmydaddy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JimmyDaddy/doctorstrange-updater/issues"
+  },
+  "homepage": "https://github.com/JimmyDaddy/doctorstrange-updater#readme"
 }
