@@ -5,9 +5,7 @@
 #import "RCTBridge.h"
 #include "bspatch.h"
 #import "RCTLog.h"
-#import "SSZipArchive.h"
 #import "RCTConvert.h"
-
 
 //最近一次检查更新日期
 NSString* const DoctorStrangeUpdaterLastUpdateCheckDate = @"DoctorStrangeUpdater Last Update Check Date";
@@ -21,13 +19,10 @@ NSString* const DoctorStrangeUpdaterAppVersionFirstOpen = @"DoctorStrangeUpdater
 NSString* const PATCH_FILE_NOT_EXIST = @"patch file not exist";
 NSString* const ORIGINAL_FILE_NOT_EXIST = @"origin file not exist";
 NSString* const PATCH_FAIL = @"pacth fail";
-NSString* const UNZIP_FAIL_BUNDLE_NOT_EXIST = @"unzip fail, the bundle not exist";
-NSString* const UNZIP_FAIL = @"unzip fail";
-NSString* const CREATE_DATA_DIR_FAIL = @"create data dir fail";
-NSString* const ZIP_FILE_NOT_EXIST = @"zip file not exist";
 
 
-@interface DoctorStrangeUpdater() <RCTBridgeModule>
+@interface DoctorStrangeUpdater()<RCTBridgeModule>
+
 
 @property NSURL* defaultJSCodeLocation;
 @property NSURL* defaultMetadataFileLocation;
@@ -37,10 +32,11 @@ NSString* const ZIP_FILE_NOT_EXIST = @"zip file not exist";
 @property BOOL initializationOK;
 
 
-
 @end
 
-@implementation DoctorStrangeUpdater
+@implementation DoctorStrangeUpdater {
+    dispatch_queue_t _updateQueue;
+}
 
 @synthesize bridge = _bridge;
 
@@ -92,6 +88,9 @@ static bool isFirstAccess = YES;
         [self doesNotRecognizeSelector:_cmd];
     }
     self = [super init];
+    if (self) {
+        _updateQueue = dispatch_queue_create("doctorUpdate", DISPATCH_QUEUE_SERIAL);
+    }
     return self;
 }
 
@@ -187,59 +186,13 @@ RCT_EXPORT_METHOD(patch:(NSString *)patchPath
     }
 }
 
-/**
- * 解压文件到指定文件夹，文件夹不存在则创建，否则返回bundle所在位置，***bundle名字约定为doctor.jsbundle***
- **/
-RCT_EXPORT_METHOD(uzipFileAtPath:(NSString*)filePath
-                  destinationPath:(NSString*)destinationPath
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject
-                  ){
-    
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    //判断需要解压的文件是否存在
-    if ([fileManager fileExistsAtPath:filePath]) {
-        //判断目标文件夹是否存在，不存在则创建
-        if ([fileManager fileExistsAtPath:destinationPath] == NO) {
-            NSError *error;
-            if ([fileManager createDirectoryAtPath:destinationPath
-                        withIntermediateDirectories:YES
-                                         attributes:nil
-                                              error:&error] == NO)
-            {
-                NSLog(@"Create directory error: %@", error);
-                reject(CREATE_DATA_DIR_FAIL, @"create data dir fail", error);
-                return;
-            }
-        }
-        //进行解压
-        if ([SSZipArchive unzipFileAtPath:filePath toDestination: destinationPath]) {
-            NSString *bundlePath = [destinationPath stringByAppendingPathComponent:@"doctor.jsbundle"];
-            //解压成功后判断文件是否存在，存在则返回文件路径
-            if ([fileManager fileExistsAtPath: bundlePath]) {
-                resolve(bundlePath);
-                return;
-            } else {
-                reject(UNZIP_FAIL_BUNDLE_NOT_EXIST, @"bundle not exist", nil);
-                return;
-            }
-        } else {
-            reject(UNZIP_FAIL, @"unzip fail", nil);
-            return;
-        }
-
-    } else {
-        reject(ZIP_FILE_NOT_EXIST, @"zip not exist", nil);
-    }
-}
-
 RCT_EXPORT_METHOD(reload:(NSString*)bundlePath){
     dispatch_async(dispatch_get_main_queue(), ^{
         @try {
             [_bridge setValue:[NSURL fileURLWithPath:bundlePath] forKey:@"bundleURL"];
             [_bridge reload];
         } @catch (NSException *exception) {
-            NSLog(@"%@", exception.reason);
+            NSLog(@"eee%@", exception.reason);
         } @finally {
             
         }
@@ -252,6 +205,7 @@ RCT_EXPORT_METHOD(setMetaData:(NSDictionary*) obj
                   key: (NSString*) key){
     @try {
         [[NSUserDefaults standardUserDefaults] setObject:obj forKey:key];
+        [[NSUserDefaults standardUserDefaults] synchronize]; //立即持久化
     } @catch (NSException *exception) {
         NSLog(@"set nata data fail: %@", exception.reason);
     } @finally {
@@ -266,6 +220,22 @@ RCT_EXPORT_METHOD(allowCellularDataUse: (BOOL)cellular){
 RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
     self.showProgress = showProgress;
 }
+
+RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
+                  color: (nullable NSString*) color){
+    
+    UIColor* uiColor = nil;
+
+    if (color != nil) {
+        uiColor = [self getColor:color];
+    } else {
+        uiColor = [StatusBarNotification successColor];
+    }
+    
+    
+    [StatusBarNotification showWithMessage:NSLocalizedString(msg, nil) backgroundColor:uiColor autoHide:YES];
+}
+
 
 
 #pragma mark - initialize Singleton
@@ -298,6 +268,59 @@ RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
 
 #pragma mark - private
 
+
+- (void)reject:(RCTPromiseRejectBlock)reject withError:(NSError *)error
+{
+    NSString *codeWithDomain = [NSString stringWithFormat:@"E%@%zd", error.domain.uppercaseString, error.code];
+    reject(codeWithDomain, error.localizedDescription, error);
+}
+
+- (NSString *)getPathForDirectory:(int)directory
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(directory, NSUserDomainMask, YES);
+    return [paths firstObject];
+}
+
+
+- (UIColor *)getColor:(NSString *)hexColor {
+    NSString *string = [hexColor substringFromIndex:1];//去掉#号
+    unsigned int red,green,blue;
+    NSRange range;
+    range.length = 2;
+    
+    range.location = 0;
+    /* 调用下面的方法处理字符串 */
+    red = [self stringToInt:[string substringWithRange:range]];
+    
+    range.location = 2;
+    green = [self stringToInt:[string substringWithRange:range]];
+    range.location = 4;
+    blue = [self stringToInt:[string substringWithRange:range]];
+    
+    return [UIColor colorWithRed:(float)(red/255.0f) green:(float)(green / 255.0f) blue:(float)(blue / 255.0f) alpha:1.0f];
+}
+- (int)stringToInt:(NSString *)string {
+    
+    unichar hex_char1 = [string characterAtIndex:0]; /* 两位16进制数中的第一位(高位*16) */
+    int int_ch1;
+    if (hex_char1 >= '0' && hex_char1 <= '9')
+        int_ch1 = (hex_char1 - 48) * 16;   /* 0 的Ascll - 48 */
+    else if (hex_char1 >= 'A' && hex_char1 <='F')
+        int_ch1 = (hex_char1 - 55) * 16; /* A 的Ascll - 65 */
+    else
+        int_ch1 = (hex_char1 - 87) * 16; /* a 的Ascll - 97 */
+    unichar hex_char2 = [string characterAtIndex:1]; /* 两位16进制数中的第二位(低位) */
+    int int_ch2;
+    if (hex_char2 >= '0' && hex_char2 <='9')
+        int_ch2 = (hex_char2 - 48); /* 0 的Ascll - 48 */
+    else if (hex_char1 >= 'A' && hex_char1 <= 'F')
+        int_ch2 = hex_char2 - 55; /* A 的Ascll - 65 */
+    else
+        int_ch2 = hex_char2 - 87; /* a 的Ascll - 97 */
+    return int_ch1+int_ch2;
+}
+
+
 /**
  *
  *初始化app当前原生版本是否第一次打开
@@ -312,7 +335,6 @@ RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
         [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:flag];
         [[NSUserDefaults standardUserDefaults] synchronize]; //立即持久化 － 因为用户终止程序时不会保存
     }
-
 }
 
 /**
@@ -344,9 +366,11 @@ RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
  **/
 - (void)compareSavedMetadataAgainstContentsOfFile: (NSURL*)metadataFileLocation {
     //如果app是第一次打开，则进行资源初始化操作
+    //创建资源文件夹
+    [self createCodeDirectory];
     if ([self currentVersionFirstOpen]) {
         //删除上一版本的资源
-        dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_sync(_updateQueue, ^{
             if ([self removeSources]) {
                 if([self copyResource:metadataFileLocation]){
                     [self afterFirstOpenInit];
@@ -401,6 +425,9 @@ RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
     if (!(isDir && isDirExist)) {
         NSString *bundleAssets = [[[NSBundle mainBundle]resourcePath]stringByAppendingPathComponent:@"assets"];
         if([fileManager copyItemAtPath:bundleAssets toPath:assetsFolder error:&error] == NO){
+            if (self.showProgress) {
+                [StatusBarNotification showWithMessage:NSLocalizedString(@"Copy static resources fail.", error) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
+            }
             self.initializationOK = NO;
             return NO;
         };
@@ -427,18 +454,24 @@ RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
         if (error) {
             NSLog(@"[DoctorStrangeUpdater]: Initialized with a WRONG metadata file.");
             if (self.showProgress) {
-                [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
+                [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", error) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
             }
             self.initializationOK = NO;
             return NO;
         }
 
         [[NSUserDefaults standardUserDefaults] setObject:localMetadata forKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
+        [[NSUserDefaults standardUserDefaults] synchronize]; //立即持久化
         return YES;
-    }
-    self.initializationOK = NO;
-    return NO;
+    } else {
+        if (self.showProgress) {
+            [StatusBarNotification showWithMessage:NSLocalizedString(@"Copy jsbundle fail.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
+        }
+        self.initializationOK = NO;
+        return NO;
 
+    }
+    
 }
 
 /**
@@ -512,6 +545,10 @@ RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
                                       error:&error])
     {
         NSLog(@"Create directory error: %@", error);
+        if (self.showProgress) {
+            [StatusBarNotification showWithMessage:NSLocalizedString(@"Create directory error: %@", error) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
+        }
+
         return nil;
     }
     return filePathAndDirectory;

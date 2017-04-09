@@ -24,6 +24,8 @@
 		386E9C411DACBEEA00A43D54 /* DoctorStrangeUpdater.m in Sources */ = {isa = PBXBuildFile; fileRef = 386E9C3E1DACBEEA00A43D54 /* DoctorStrangeUpdater.m */; };
 		386E9C421DACBEEA00A43D54 /* StatusBarNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = 386E9C401DACBEEA00A43D54 /* StatusBarNotification.m */; };
 		38963C8D1DBEF8340077EA40 /* bspatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 38963C8B1DBEF8340077EA40 /* bspatch.c */; };
+		A1320F851E9A712900F47BDE /* DownloadManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A1320F841E9A712900F47BDE /* DownloadManager.m */; };
+		A1320F891E9A7BAB00F47BDE /* DoctorFSManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A1320F881E9A7BAB00F47BDE /* DoctorFSManager.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -81,6 +83,10 @@
 		386E9C401DACBEEA00A43D54 /* StatusBarNotification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = StatusBarNotification.m; path = DoctorStrange/StatusBarNotification.m; sourceTree = SOURCE_ROOT; };
 		38963C8B1DBEF8340077EA40 /* bspatch.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bspatch.c; sourceTree = SOURCE_ROOT; };
 		38963C8C1DBEF8340077EA40 /* bspatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bspatch.h; sourceTree = SOURCE_ROOT; };
+		A1320F831E9A712900F47BDE /* DownloadManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadManager.h; sourceTree = SOURCE_ROOT; };
+		A1320F841E9A712900F47BDE /* DownloadManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DownloadManager.m; sourceTree = SOURCE_ROOT; };
+		A1320F871E9A7BAB00F47BDE /* DoctorFSManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DoctorFSManager.h; sourceTree = SOURCE_ROOT; };
+		A1320F881E9A7BAB00F47BDE /* DoctorFSManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DoctorFSManager.m; sourceTree = SOURCE_ROOT; };
 		A1A3B5E11E977B9F00DF888C /* desperate */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = desperate; sourceTree = "<group>"; };
 		B781E74E1C52EC0100F23A25 /* libDoctorStrange.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libDoctorStrange.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -171,6 +177,33 @@
 			name = bspatch;
 			sourceTree = "<group>";
 		};
+		A1320F811E9A70C600F47BDE /* StatusBarNotification */ = {
+			isa = PBXGroup;
+			children = (
+				386E9C3F1DACBEEA00A43D54 /* StatusBarNotification.h */,
+				386E9C401DACBEEA00A43D54 /* StatusBarNotification.m */,
+			);
+			name = StatusBarNotification;
+			sourceTree = "<group>";
+		};
+		A1320F821E9A70F700F47BDE /* downloadManager */ = {
+			isa = PBXGroup;
+			children = (
+				A1320F831E9A712900F47BDE /* DownloadManager.h */,
+				A1320F841E9A712900F47BDE /* DownloadManager.m */,
+			);
+			name = downloadManager;
+			sourceTree = "<group>";
+		};
+		A1320F861E9A7B7100F47BDE /* DoctorFSManager */ = {
+			isa = PBXGroup;
+			children = (
+				A1320F871E9A7BAB00F47BDE /* DoctorFSManager.h */,
+				A1320F881E9A7BAB00F47BDE /* DoctorFSManager.m */,
+			);
+			name = DoctorFSManager;
+			sourceTree = "<group>";
+		};
 		B781E7451C52EC0100F23A25 = {
 			isa = PBXGroup;
 			children = (
@@ -192,12 +225,13 @@
 		B781E7501C52EC0100F23A25 /* DoctorStrange */ = {
 			isa = PBXGroup;
 			children = (
+				A1320F861E9A7B7100F47BDE /* DoctorFSManager */,
+				A1320F821E9A70F700F47BDE /* downloadManager */,
+				A1320F811E9A70C600F47BDE /* StatusBarNotification */,
 				3854DD931DC31872000E8824 /* SSZipArchive */,
 				38963C891DBEF7BB0077EA40 /* bspatch */,
 				386E9C3D1DACBEEA00A43D54 /* DoctorStrangeUpdater.h */,
 				386E9C3E1DACBEEA00A43D54 /* DoctorStrangeUpdater.m */,
-				386E9C3F1DACBEEA00A43D54 /* StatusBarNotification.h */,
-				386E9C401DACBEEA00A43D54 /* StatusBarNotification.m */,
 			);
 			name = DoctorStrange;
 			path = ReactNativeAutoUpdater;
@@ -270,12 +304,14 @@
 				386E9C421DACBEEA00A43D54 /* StatusBarNotification.m in Sources */,
 				3854DDBC1DC31872000E8824 /* aestab.c in Sources */,
 				3854DDC61DC31872000E8824 /* zip.c in Sources */,
+				A1320F891E9A7BAB00F47BDE /* DoctorFSManager.m in Sources */,
 				386E9C411DACBEEA00A43D54 /* DoctorStrangeUpdater.m in Sources */,
 				3854DDBA1DC31872000E8824 /* aescrypt.c in Sources */,
 				38963C8D1DBEF8340077EA40 /* bspatch.c in Sources */,
 				3854DDBF1DC31872000E8824 /* hmac.c in Sources */,
 				3854DDBB1DC31872000E8824 /* aeskey.c in Sources */,
 				3854DDBD1DC31872000E8824 /* entropy.c in Sources */,
+				A1320F851E9A712900F47BDE /* DownloadManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

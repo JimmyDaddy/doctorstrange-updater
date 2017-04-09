@@ -9,7 +9,7 @@ At first you should add a json file under your project path, there is sample of 
 ``` json
 {
 	"version": "1.6.9",
-	"minContainerVersion": "2.3.4",
+	"minContainerVersion": "2.3.4"
 }
 ```
 Here's what the fields in the JSON mean:
@@ -75,6 +75,12 @@ The code below essentially follows these steps.
 import DoctorstrangeUpdater from 'doctorstrange-updater';
 //then initial with options
 let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater({
+	//
+	DEBUG: false,
+
+	debugVersionHost: 'http://192.168.3.28:3002/update/version/selectlatest',
+
+	debugDownloadHost: 'http://192.168.3.28:3002/update/download',
 	//set the versionhost to get the latest version
 	versionHost: `http://doctorstrange.songxiaocai.org/update/version/selectlatest`,
 	//source download server

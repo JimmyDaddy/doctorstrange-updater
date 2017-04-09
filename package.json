@@ -4,9 +4,10 @@
   "peerDependencies": {
     "react-native": ">=0.18.0"
   },
-  "version": "0.0.4",
+  "version": "0.0.5",
   "dependencies": {
-    "react-native-fs": "^2.0.1-rc.2",
+    "base-64": "^0.1.0",
+    "utf8": "^2.1.2",
     "whatwg-fetch": "^2.0.3"
   },
   "repository": {

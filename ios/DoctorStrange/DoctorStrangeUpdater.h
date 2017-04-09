@@ -5,10 +5,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "RCTRootView.h"
+#import "RCTEventEmitter.h"
+#import "RCTBridge.h"
 
 
-@interface DoctorStrangeUpdater : NSObject
+@interface DoctorStrangeUpdater: NSObject
 
 /**
  *  Returns the singleton instance of DoctorStrangeUpdater

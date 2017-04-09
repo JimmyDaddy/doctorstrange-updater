@@ -2,11 +2,11 @@
 'use strict';
 
 import ReactNative from 'react-native';
-import RNFS from 'react-native-fs';
-import Obj from './obj';
-import 'whatwg-fetch';
-import Str from './str';
 
+import Obj from './lib/obj';
+import 'whatwg-fetch';
+import Str from './lib/str';
+import FS from './lib/fs';
 
 let DoctorStrangeUpdaterModule = ReactNative.NativeModules.DoctorStrangeUpdater;
 
@@ -15,7 +15,7 @@ let DoctorStrangeUpdaterModule = ReactNative.NativeModules.DoctorStrangeUpdater;
  */
 
 //default source root
-const  SOURCE_ROOT = RNFS.LibraryDirectoryPath + '/JSCode';
+const  SOURCE_ROOT = FS.LibraryDirectoryPath + '/JSCode';
 //default version host
 const  DEFAULT_VERSION_HOST = 'http://doctorstrange.songxiaocai.org/update/version/selectlatest';
 //default data download host
@@ -25,10 +25,6 @@ const DEFAULT_OPTIONS = {
     versionHost: DEFAULT_VERSION_HOST,
     downloadHost: DEFAULT_DATA_DOWNLOAD_HOST,
 }
-
-const jobId = -1;
-
-console.log(RNFS.LibraryDirectoryPath);
 
 class DoctorStrangeUpdater {
     /**
@@ -59,10 +55,17 @@ class DoctorStrangeUpdater {
         } else {
             this.options = DEFAULT_OPTIONS;
         }
-        const {versionHost, downloadHost, allowCellularDataUse, showProgress} = this.options;
+        const {versionHost, downloadHost, allowCellularDataUse, showProgress, DEBUG, debugVersionHost, debugDownloadHost} = this.options;
         // set hosts
-        this.versionHost = versionHost || DEFAULT_VERSION_HOST;
-        this.downloadHost = downloadHost || DEFAULT_DATA_DOWNLOAD_HOST;
+
+        if (DEBUG) {
+            this.versionHost = debugVersionHost || DEFAULT_VERSION_HOST;
+            this.downloadHost = debugDownloadHost || DEFAULT_DATA_DOWNLOAD_HOST;
+        } else {
+            this.versionHost = versionHost || DEFAULT_VERSION_HOST;
+            this.downloadHost = downloadHost || DEFAULT_DATA_DOWNLOAD_HOST;
+        }
+
         //
         //
         typeof allowCellularDataUse == 'boolean'? DoctorStrangeUpdaterModule.allowCellularDataUse(allowCellularDataUse) : null ;
@@ -85,7 +88,6 @@ class DoctorStrangeUpdater {
                     bundleId: this.BUNDLEID,
                     version: this.JSCODE_VERSION,
                 }
-
                 fetch(
                     this.versionHost,
                     {
@@ -97,6 +99,7 @@ class DoctorStrangeUpdater {
                         body: JSON.stringify(params)
                     })
                 .then((response) => {
+                    console.log(response);
                     if(response.status >= 400) {
                         this.options.checkError && this.options.checkError();
                     }
@@ -106,6 +109,7 @@ class DoctorStrangeUpdater {
                     return response.json();
                 })
                 .then((res) => {
+                    console.log(res);
                     this.newVersion = res.version;
                     this.newContainerVersion = res.minContainerVersion;
                     this.patchId = res.patchId;
@@ -119,6 +123,7 @@ class DoctorStrangeUpdater {
                                 if (value && this.patchId) {
                                     this.downLoadPatch()
                                 } else {
+                                    console.log('sss');
                                     this.downLoad();
                                 }
                             });
@@ -164,6 +169,10 @@ class DoctorStrangeUpdater {
         }
 
     }
+
+    showMessageOnStatusBar = (msg: String, color: String) => {
+        DoctorStrangeUpdaterModule.showMessageOnStatusBar(msg, color);
+    }
     /**
      * [getDoctorStrangeUpdater get instance]
      * @type {[type]}
@@ -181,9 +190,9 @@ class DoctorStrangeUpdater {
     }
 
     async initSourceDir(){
-        let exists = await RNFS.exists(SOURCE_ROOT);
+        let exists = await FS.exists(SOURCE_ROOT);
         if (!exists) {
-            let success = await RNFS.mkdir(SOURCE_ROOT);
+            let success = await FS.mkdir(SOURCE_ROOT);
             return success;
         } else {
             return exists;
@@ -210,22 +219,12 @@ class DoctorStrangeUpdater {
         return DoctorStrangeUpdaterModule.patch(patchPath, originPath, destination);
     }
 
-    /**
-     * [uzipFileAtPath description]
-     * @method uzipFileAtPath
-     * @param  {[type]}       filePath    [description]
-     * @param  {[type]}       destination [description]
-     * @return {[type]}                   [description]
-     * @author jimmy
-     */
-    uzipFileAtPath = (filePath, destination) => {
-        return DoctorStrangeUpdaterModule.uzipFileAtPath(filePath, destination);
-    }
+
 
     downLoadPatch = () => {
         //首先拷贝源文件
         let tempDataFile = SOURCE_ROOT+'/temp.zip';
-        RNFS.copyFile(SOURCE_ROOT+'/doctor.zip', tempDataFile).then((value) => {
+        FS.copyFile(SOURCE_ROOT+'/doctor.zip', tempDataFile).then((value) => {
             const progress = (data) => {
                 const percentage = data.bytesWritten/1024/1024;
                 this.options.downloadProgress && this.options.downloadProgress(percentage);
@@ -236,7 +235,7 @@ class DoctorStrangeUpdater {
             const progressDivider = 1;
             const downloadDestPath = `${SOURCE_ROOT}/temp.patch`;
 
-            const ret = RNFS.downloadFile({
+            const ret = FS.downloadFile({
                 fromUrl: this.downloadHost+'?patchId='+this.patchId+'&bundleId='+this.BUNDLEID,
                 toFile: downloadDestPath,
                 begin,
@@ -245,23 +244,21 @@ class DoctorStrangeUpdater {
                 progressDivider
             });
 
-            jobId = ret.jobId;
-
             ret.promise.then((res) => {
                 this.options.downloadEnd && this.options.downloadEnd();
                 this.patch(downloadDestPath, tempDataFile, SOURCE_ROOT+'/doctor.zip')
                 .then((value) => {
-                    this.uzipFileAtPath(value, SOURCE_ROOT).then(
+                    FS.uzipFileAtPath(value, SOURCE_ROOT).then(
                         async (res) => {
-                        let success = await RNFS.unlink(tempDataFile);
+                        let success = await FS.unlink(tempDataFile);
                         if (!success) {
                             this.reportError(null, 'remove temp file fail [patch]');
                         }
-                        success = await RNFS.unlink(downloadDestPath);
+                        success = await FS.unlink(downloadDestPath);
                         if (!success) {
                             this.reportError(null, 'remove temp.patch file fail [patch]');
                         }
-                        RNFS.exists(res).then((exist) => {
+                        FS.exists(res).then((exist) => {
                             if(exist){
                                 DoctorStrangeUpdaterModule.setMetaData(this.currentMetaData,DoctorStrangeUpdaterModule.currentMetaDataKey)
                                 DoctorStrangeUpdaterModule.setMetaData(DoctorStrangeUpdaterModule.currentMetaData,DoctorStrangeUpdaterModule.previousMetaDataKey)
@@ -290,11 +287,9 @@ class DoctorStrangeUpdater {
 
                     this.reportError(err, 'patch error');
                 });
-                jobId = -1;
             }).catch((err) => {
                 this.options.downloadError && this.options.downloadError(err);
                 this.reportError(err, 'download error');
-                jobId = -1;
             });
         }).catch((err) => {
             this.downLoad();
@@ -314,7 +309,7 @@ class DoctorStrangeUpdater {
         };
         const progressDivider = 1;
         const downloadDestPath = `${SOURCE_ROOT}/doctor.zip`;
-        const ret = RNFS.downloadFile({
+        const ret = FS.downloadFile({
             fromUrl: this.downloadHost+'?version='+this.newVersion+'&bundleId='+this.BUNDLEID,
             toFile: downloadDestPath,
             begin,
@@ -323,12 +318,10 @@ class DoctorStrangeUpdater {
             progressDivider
         });
 
-        jobId = ret.jobId;
-
         ret.promise.then((res) => {
             this.options.downloadEnd && this.options.downloadEnd();
-            this.uzipFileAtPath(downloadDestPath, SOURCE_ROOT).then((res) => {
-                RNFS.exists(res).then((exist) => {
+            FS.uzipFileAtPath(downloadDestPath, SOURCE_ROOT).then((res) => {
+                FS.exists(res).then((exist) => {
                     if(exist){
                         this.BUNDLE_PATH = res;
                         DoctorStrangeUpdaterModule.setMetaData(this.currentMetaData,DoctorStrangeUpdaterModule.currentMetaDataKey)
@@ -351,16 +344,14 @@ class DoctorStrangeUpdater {
                 this.options.onError && this.options.onError();
                 this.reportError(err, 'unzipfile error ');
             })
-            jobId = -1;
         }).catch((err) => {
             this.options.downloadError && this.options.downloadError(err);
             this.reportError(err, 'download error');
-            jobId = -1;
         });
     }
 
     async currentZipDataExist(){
-        return await RNFS.exists(SOURCE_ROOT+'/doctor.zip');
+        return await FS.exists(SOURCE_ROOT+'/doctor.zip');
     }
 
 }
