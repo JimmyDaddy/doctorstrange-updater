@@ -9,7 +9,13 @@
 #import "RCTBridge.h"
 
 
-@interface DoctorStrangeUpdater: NSObject
+@interface DoctorStrangeUpdater: NSObject<RCTBridgeModule>
+
+@property NSURL* defaultJSCodeLocation;
+@property NSURL* defaultMetadataFileLocation;
+@property NSURL* _latestJSCodeLocation;
+@property (nonatomic) BOOL showInfo;
+@property BOOL initializationOK;
 
 /**
  *  Returns the singleton instance of DoctorStrangeUpdater

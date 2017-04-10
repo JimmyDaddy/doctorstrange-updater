@@ -21,19 +21,6 @@ NSString* const ORIGINAL_FILE_NOT_EXIST = @"origin file not exist";
 NSString* const PATCH_FAIL = @"pacth fail";
 
 
-@interface DoctorStrangeUpdater()<RCTBridgeModule>
-
-
-@property NSURL* defaultJSCodeLocation;
-@property NSURL* defaultMetadataFileLocation;
-@property NSURL* _latestJSCodeLocation;
-@property (nonatomic) BOOL showProgress;
-@property (nonatomic) BOOL allowCellularDataUse;//是否允许使用蜂窝数据
-@property BOOL initializationOK;
-
-
-@end
-
 @implementation DoctorStrangeUpdater {
     dispatch_queue_t _updateQueue;
 }
@@ -95,8 +82,7 @@ static bool isFirstAccess = YES;
 }
 
 - (void)defaults {
-    self.showProgress = NO;
-    self.allowCellularDataUse = YES;
+    self.showInfo = NO;
 }
 
 #pragma mark - JS methods
@@ -213,12 +199,8 @@ RCT_EXPORT_METHOD(setMetaData:(NSDictionary*) obj
     }
 }
 
-RCT_EXPORT_METHOD(allowCellularDataUse: (BOOL)cellular){
-    self.allowCellularDataUse = cellular;
-}
-
-RCT_EXPORT_METHOD(showProgress: (BOOL)showProgress){
-    self.showProgress = showProgress;
+RCT_EXPORT_METHOD(showInfo: (BOOL)showInfo){
+    self.showInfo = showInfo;
 }
 
 RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
@@ -425,7 +407,7 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
     if (!(isDir && isDirExist)) {
         NSString *bundleAssets = [[[NSBundle mainBundle]resourcePath]stringByAppendingPathComponent:@"assets"];
         if([fileManager copyItemAtPath:bundleAssets toPath:assetsFolder error:&error] == NO){
-            if (self.showProgress) {
+            if (self.showInfo) {
                 [StatusBarNotification showWithMessage:NSLocalizedString(@"Copy static resources fail.", error) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
             }
             self.initializationOK = NO;
@@ -442,7 +424,7 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
         NSData* fileMetadata = [NSData dataWithContentsOfURL: metadataFileLocation];
         if (!fileMetadata) {
             NSLog(@"[DoctorStrangeUpdater]: Make sure you initialize  with a metadata file.");
-            if (self.showProgress) {
+            if (self.showInfo) {
                 [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
             }
             self.initializationOK = NO;
@@ -453,7 +435,7 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
         NSDictionary* localMetadata = [NSJSONSerialization JSONObjectWithData:fileMetadata options:NSJSONReadingAllowFragments error:&error];
         if (error) {
             NSLog(@"[DoctorStrangeUpdater]: Initialized with a WRONG metadata file.");
-            if (self.showProgress) {
+            if (self.showInfo) {
                 [StatusBarNotification showWithMessage:NSLocalizedString(@"Error reading Metadata File.", error) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
             }
             self.initializationOK = NO;
@@ -464,7 +446,7 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
         [[NSUserDefaults standardUserDefaults] synchronize]; //立即持久化
         return YES;
     } else {
-        if (self.showProgress) {
+        if (self.showInfo) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"Copy jsbundle fail.", nil) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
         }
         self.initializationOK = NO;
@@ -482,14 +464,14 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
              origin:(NSString *)origin
         destination:(NSString *)destination
 {
-    if (self.showProgress) {
+    if (self.showInfo) {
         [StatusBarNotification showWithMessage:NSLocalizedString(@"初始化新数据中", nil)
                                backgroundColor:[StatusBarNotification errorColor]
                                       autoHide:YES];
     }
 
     if (![[NSFileManager defaultManager] fileExistsAtPath:patchPath]) {
-        if (self.showProgress) {
+        if (self.showInfo) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"patch文件不存在.", nil)
                                    backgroundColor:[StatusBarNotification errorColor]
                                           autoHide:YES];
@@ -498,7 +480,7 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
     }
     
     if (![[NSFileManager defaultManager] fileExistsAtPath:origin]) {
-        if (self.showProgress) {
+        if (self.showInfo) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"originfile not exist.", nil)
                                    backgroundColor:[StatusBarNotification errorColor]
                                           autoHide:YES];
@@ -506,8 +488,10 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
         return NO;
     }
     
-    if ([[NSFileManager defaultManager] fileExistsAtPath:destination]) {
-        [[NSFileManager defaultManager] removeItemAtPath:destination error:nil];
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    
+    if ([fileManager fileExistsAtPath:destination]) {
+        [fileManager removeItemAtPath:destination error:nil];
     }
     
     
@@ -516,6 +500,17 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
     if (err) {
         return NO;
     }
+    
+    dispatch_async(_updateQueue, ^{
+        if ([fileManager fileExistsAtPath:patchPath]) {
+            [fileManager removeItemAtPath:patchPath error:nil];
+        }
+        
+        if ([fileManager fileExistsAtPath:origin]) {
+            [fileManager removeItemAtPath:origin error:nil];
+        }
+    });
+    
     return YES;
 }
 
@@ -545,7 +540,7 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
                                       error:&error])
     {
         NSLog(@"Create directory error: %@", error);
-        if (self.showProgress) {
+        if (self.showInfo) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"Create directory error: %@", error) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
         }
 

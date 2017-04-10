@@ -1,7 +1,7 @@
 
 'use strict';
 
-import ReactNative from 'react-native';
+import ReactNative, {NetInfo} from 'react-native';
 
 import Obj from './lib/obj';
 import 'whatwg-fetch';
@@ -55,7 +55,7 @@ class DoctorStrangeUpdater {
         } else {
             this.options = DEFAULT_OPTIONS;
         }
-        const {versionHost, downloadHost, allowCellularDataUse, showProgress, DEBUG, debugVersionHost, debugDownloadHost} = this.options;
+        const {versionHost, downloadHost, allowCellularDataUse, showInfo, DEBUG, debugVersionHost, debugDownloadHost} = this.options;
         // set hosts
 
         if (DEBUG) {
@@ -68,8 +68,10 @@ class DoctorStrangeUpdater {
 
         //
         //
-        typeof allowCellularDataUse == 'boolean'? DoctorStrangeUpdaterModule.allowCellularDataUse(allowCellularDataUse) : null ;
-        typeof showProgress == 'boolean'? DoctorStrangeUpdaterModule.showProgress(showProgress) : null;
+        //
+        this.allowCellularDataUse = allowCellularDataUse;
+
+        typeof showInfo == 'boolean'? DoctorStrangeUpdaterModule.showInfo(showInfo) : null;
 
 
     }
@@ -81,70 +83,74 @@ class DoctorStrangeUpdater {
      * @author jimmy
      */
     checkUpdate = () => {
-        this.initSourceDir().then((result) => {
-            this.initSuccess = result;
-            if (this.initSuccess) {
-                let params = {
-                    bundleId: this.BUNDLEID,
-                    version: this.JSCODE_VERSION,
-                }
-                fetch(
-                    this.versionHost,
-                    {
-                        method: 'post',
-                        headers : {
-                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(params)
-                    })
-                .then((response) => {
-                    console.log(response);
-                    if(response.status >= 400) {
-                        this.options.checkError && this.options.checkError();
+        setTimeout( () => {
+            this.initSourceDir().then((result) => {
+                this.initSuccess = result;
+                if (this.initSuccess) {
+                    let params = {
+                        bundleId: this.BUNDLEID,
+                        version: this.JSCODE_VERSION,
                     }
-                    return response;
-                })
-                .then((response) => {
-                    return response.json();
-                })
-                .then((res) => {
-                    console.log(res);
-                    this.newVersion = res.version;
-                    this.newContainerVersion = res.minContainerVersion;
-                    this.patchId = res.patchId;
-                    this.currentMetaData = res;
-                    if (res.serverUrl) {
-                        this.downloadHost = res.serverUrl;
-                    }
-                    if (Str.compareContainerVersion(this.APP_VERISON, this.newContainerVersion)) {
-                        if (Str.compareVersion(this.JSCODE_VERSION, this.newVersion)) {
-                            this.currentZipDataExist().then((value) => {
-                                if (value && this.patchId) {
-                                    this.downLoadPatch()
-                                } else {
-                                    console.log('sss');
-                                    this.downLoad();
-                                }
-                            });
-                        } else {
-                            console.log('already updated');
+                    fetch(
+                        this.versionHost,
+                        {
+                            method: 'post',
+                            headers : {
+                                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(params)
+                        })
+                    .then((response) => {
+                        if(response.status >= 400) {
+                            this.options.checkError && this.options.checkError();
                         }
-                    } else {
-                        console.log('app version too low please upgrade');
-                    }
+                        return response;
+                    })
+                    .then((response) => {
+                        return response.json();
+                    })
+                    .then((res) => {
+                        this.newVersion = res.version;
+                        this.newContainerVersion = res.minContainerVersion;
+                        this.patchId = res.patchId;
+                        this.currentMetaData = res;
+                        if (res.serverUrl) {
+                            this.downloadHost = res.serverUrl;
+                        }
+                        if (this.newVersion && this.newContainerVersion) {
 
-                })
-                .catch((err) => {
-                    console.log(err);
-                    this.options.checkError && this.options.checkError();
-                });
-            }
-        }).catch((err) => {
-            this.initSuccess = false;
-            this.options.onError && this.options.onError();
-            this.reportError(err, 'init fail');
-        });
+                        }
+                        if (Str.compareContainerVersion(this.APP_VERISON, this.newContainerVersion)) {
+                            if (Str.compareVersion(this.JSCODE_VERSION, this.newVersion)) {
+                                this.currentZipDataExist().then((value) => {
+                                    if (value && this.patchId) {
+                                        this.downLoadPatch()
+                                    } else {
+                                        this.downLoad();
+                                    }
+                                });
+                            } else {
+                                console.log('already updated');
+                                this.options.alreadyUpdated && this.options.alreadyUpdated();
+                            }
+                        } else {
+                            console.log('app version too low please upgrade');
+                            this.options.needUpdateApp && this.options.needUpdateApp();
+                        }
+
+                    })
+                    .catch((err) => {
+                        this.options.checkError && this.options.checkError();
+                    });
+                }
+            }).catch((err) => {
+                this.initSuccess = false;
+                this.options.onError && this.options.onError();
+                this.reportError(err, 'init fail');
+            });
+
+        }, 1000);
 
 
 
@@ -249,15 +255,7 @@ class DoctorStrangeUpdater {
                 this.patch(downloadDestPath, tempDataFile, SOURCE_ROOT+'/doctor.zip')
                 .then((value) => {
                     FS.uzipFileAtPath(value, SOURCE_ROOT).then(
-                        async (res) => {
-                        let success = await FS.unlink(tempDataFile);
-                        if (!success) {
-                            this.reportError(null, 'remove temp file fail [patch]');
-                        }
-                        success = await FS.unlink(downloadDestPath);
-                        if (!success) {
-                            this.reportError(null, 'remove temp.patch file fail [patch]');
-                        }
+                        (res) => {
                         FS.exists(res).then((exist) => {
                             if(exist){
                                 DoctorStrangeUpdaterModule.setMetaData(this.currentMetaData,DoctorStrangeUpdaterModule.currentMetaDataKey)
@@ -300,6 +298,19 @@ class DoctorStrangeUpdater {
     }
 
     downLoad = () => {
+        NetInfo.fetch().done((reach) => {
+            if (reach != 'none' && reach != 'NONE') {
+                if (this.allowCellularDataUse) {
+                    this.downLoadData();
+                } else if (reach != 'cell' && reach != 'MOBILE') {
+                    this.downLoadData();
+                }
+            }
+        });
+
+    }
+
+    downLoadData = () => {
         const progress = (data) => {
             const percentage = data.bytesWritten/1024/1024;
             this.options.downloadProgress && this.options.downloadProgress(percentage);

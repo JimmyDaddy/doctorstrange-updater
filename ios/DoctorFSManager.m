@@ -7,7 +7,6 @@
 //
 
 #import "DoctorFSManager.h"
-#import "DownloadManager.h"
 #import "SSZipArchive.h"
 
 
@@ -17,13 +16,6 @@ NSString* const UNZIP_FAIL = @"unzip fail";
 NSString* const ZIP_FILE_NOT_EXIST = @"zip file not exist";
 NSString* const CREATE_DATA_DIR_FAIL = @"create data dir fail";
 
-
-@interface DoctorFSManager()
-
-@property DownloadManager* downloader;
-
-
-@end
 
 @implementation DoctorFSManager
 
@@ -184,7 +176,7 @@ RCT_EXPORT_METHOD(downloadFile:(NSDictionary *)options
                                   @"bytesWritten": bytesWritten}];
     };
     
-    if (!self.downloader) self.downloader = [DownloadManager alloc];
+    if (!self.downloader) self.downloader = [Downloader alloc];
     
     [self.downloader downloadFile:params];
     

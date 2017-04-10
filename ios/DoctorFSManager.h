@@ -9,8 +9,12 @@
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
 #import "RCTEventEmitter.h"
+#import "Downloader.h"
+
 
 @interface DoctorFSManager : RCTEventEmitter<RCTBridgeModule>
+
+@property Downloader* downloader;
 
 
 @end
