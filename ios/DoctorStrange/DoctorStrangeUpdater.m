@@ -1,11 +1,17 @@
 
-
-#import "DoctorStrangeUpdater.h"
-#import "StatusBarNotification.h"
+#if __has_include(<React/RCTBridge.h>)
+#import <React/RCTBridge.h>
+#import <React/RCTLog.h>
+#import <React/RCTConvert.h>
+#else
 #import "RCTBridge.h"
-#include "bspatch.h"
 #import "RCTLog.h"
 #import "RCTConvert.h"
+#endif
+#include "bspatch.h"
+#import "DoctorStrangeUpdater.h"
+#import "StatusBarNotification.h"
+
 
 //最近一次检查更新日期
 NSString* const DoctorStrangeUpdaterLastUpdateCheckDate = @"DoctorStrangeUpdater Last Update Check Date";

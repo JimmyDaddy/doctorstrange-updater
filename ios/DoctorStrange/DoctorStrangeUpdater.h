@@ -1,12 +1,12 @@
-//
-/**
- * this project based on ReactNativeAutoUpdater
- */
-//
 
-#import <Foundation/Foundation.h>
+#if __has_include(<React/RCTBridge.h>)
+#import <React/RCTEventEmitter.h>
+#import <React/RCTBridge.h>
+#else
 #import "RCTEventEmitter.h"
 #import "RCTBridge.h"
+#endif
+#import <Foundation/Foundation.h>
 
 
 @interface DoctorStrangeUpdater: NSObject<RCTBridgeModule>
