@@ -192,11 +192,11 @@ class DoctorStrangeUpdater {
                 error: err,
                 errorMessage: errorMessage,
                 deviceInfo: {
-                    appVersion: APP_VERISON,
-                    systemVersion: SYSTEM_VERSION,
-                    buildNumber: BUILD_NUMBER,
-                    brand: BRAND,
-                    jsVersion: JSCODE_VERSION
+                    appVersion: this.APP_VERISON,
+                    systemVersion: this.SYSTEM_VERSION,
+                    buildNumber: this.BUILD_NUMBER,
+                    brand: this.BRAND,
+                    jsVersion: this.JSCODE_VERSION
                 }
             }
             fetch(host,
