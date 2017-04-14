@@ -87,7 +87,6 @@
 		A1320F841E9A712900F47BDE /* Downloader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Downloader.m; sourceTree = SOURCE_ROOT; };
 		A1320F871E9A7BAB00F47BDE /* DoctorFSManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DoctorFSManager.h; sourceTree = SOURCE_ROOT; };
 		A1320F881E9A7BAB00F47BDE /* DoctorFSManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DoctorFSManager.m; sourceTree = SOURCE_ROOT; };
-		A1A3B5E11E977B9F00DF888C /* desperate */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = desperate; sourceTree = "<group>"; };
 		B781E74E1C52EC0100F23A25 /* libDoctorStrange.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libDoctorStrange.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -207,7 +206,6 @@
 		B781E7451C52EC0100F23A25 = {
 			isa = PBXGroup;
 			children = (
-				A1A3B5E11E977B9F00DF888C /* desperate */,
 				B781E7501C52EC0100F23A25 /* DoctorStrange */,
 				B781E74F1C52EC0100F23A25 /* Products */,
 				3854DD7B1DC30C16000E8824 /* Frameworks */,

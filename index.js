@@ -10,6 +10,7 @@ import FS from './lib/fs';
 
 let DoctorStrangeUpdaterModule = ReactNative.NativeModules.DoctorStrangeUpdater;
 
+
 /**
  * default value
  */
@@ -25,6 +26,8 @@ const DEFAULT_OPTIONS = {
     versionHost: DEFAULT_VERSION_HOST,
     downloadHost: DEFAULT_DATA_DOWNLOAD_HOST,
 }
+
+
 
 class DoctorStrangeUpdater {
     /**
@@ -55,6 +58,9 @@ class DoctorStrangeUpdater {
         } else {
             this.options = DEFAULT_OPTIONS;
         }
+
+        this.currentMetaData = DoctorStrangeUpdaterModule.currentMetaData;
+
         const {versionHost, downloadHost, allowCellularDataUse, showInfo, DEBUG, debugVersionHost, debugDownloadHost} = this.options;
         // set hosts
 
@@ -66,13 +72,9 @@ class DoctorStrangeUpdater {
             this.downloadHost = downloadHost || DEFAULT_DATA_DOWNLOAD_HOST;
         }
 
-        //
-        //
-        //
         this.allowCellularDataUse = allowCellularDataUse;
 
         typeof showInfo == 'boolean'? DoctorStrangeUpdaterModule.showInfo(showInfo) : null;
-
 
     }
 
@@ -83,6 +85,19 @@ class DoctorStrangeUpdater {
      * @author jimmy
      */
     checkUpdate = () => {
+        DoctorStrangeUpdaterModule.getFirstLoad().then((obj) => {
+            let prevRollBackVersion = obj.updateFailVersion;
+            //如果不是更新后第一次加载且第一次加载成功则按正常程序检查更新
+            if (!obj.firstLoad) {
+                this._checkUpdate(prevRollBackVersion);
+            }
+        }).catch((err) => {
+            this._checkUpdate();
+        });
+
+    }
+
+    _checkUpdate = (prevRollBackVersion: String) => {
         setTimeout( () => {
             this.initSourceDir().then((result) => {
                 this.initSuccess = result;
@@ -111,7 +126,11 @@ class DoctorStrangeUpdater {
                         return response.json();
                     })
                     .then((res) => {
+                        if (prevRollBackVersion == res.version) {
+                            return;
+                        }
                         this.newVersion = res.version;
+
                         this.newContainerVersion = res.minContainerVersion;
                         this.patchId = res.patchId;
                         this.currentMetaData = res;
@@ -119,24 +138,26 @@ class DoctorStrangeUpdater {
                             this.downloadHost = res.serverUrl;
                         }
                         if (this.newVersion && this.newContainerVersion) {
-
-                        }
-                        if (Str.compareContainerVersion(this.APP_VERISON, this.newContainerVersion)) {
-                            if (Str.compareVersion(this.JSCODE_VERSION, this.newVersion)) {
-                                this.currentZipDataExist().then((value) => {
-                                    if (value && this.patchId) {
-                                        this.downLoadPatch()
-                                    } else {
-                                        this.downLoad();
-                                    }
-                                });
+                            let compareResult = Str.compareContainerVersion(this.APP_VERISON, this.newContainerVersion);
+                            if (compareResult) {
+                                if (Str.compareVersion(this.JSCODE_VERSION, this.newVersion)) {
+                                    this.currentZipDataExist().then((value) => {
+                                        if (value && this.patchId) {
+                                            this.downLoadPatch()
+                                        } else {
+                                            this.downLoad();
+                                        }
+                                    });
+                                } else {
+                                    console.log('already updated');
+                                    this.options.alreadyUpdated && this.options.alreadyUpdated();
+                                }
                             } else {
-                                console.log('already updated');
-                                this.options.alreadyUpdated && this.options.alreadyUpdated();
+                                if (compareResult != null) {
+                                    console.log('app version too low please upgrade');
+                                    this.options.needUpdateApp && this.options.needUpdateApp();
+                                }
                             }
-                        } else {
-                            console.log('app version too low please upgrade');
-                            this.options.needUpdateApp && this.options.needUpdateApp();
                         }
 
                     })
@@ -151,19 +172,34 @@ class DoctorStrangeUpdater {
             });
 
         }, 1000);
-
-
-
     }
 
+    setJsRunSuccess = () => {
+        this.currentMetaData[DoctorStrangeUpdaterModule.firstLoadkey] = false;
+        this.currentMetaData[DoctorStrangeUpdaterModule.firstLoadSuccess] = true;
+        DoctorStrangeUpdaterModule.setMetaData(this.currentMetaData, DoctorStrangeUpdaterModule.currentMetaDataKey);
+    }
+
+
     reportError = (err, errorMessage) => {
-        const {errorReportHost} = this.options;
-        if (errorReportHost) {
+        const {errorReportHost, debugErrorReportHost, DEBUG} = this.options;
+        let host = errorReportHost;
+        if (DEBUG) {
+            host = debugErrorReportHost;
+        }
+        if (host) {
             let params = {
                 error: err,
-                errorMessage: errorMessage
+                errorMessage: errorMessage,
+                deviceInfo: {
+                    appVersion: APP_VERISON,
+                    systemVersion: SYSTEM_VERSION,
+                    buildNumber: BUILD_NUMBER,
+                    brand: BRAND,
+                    jsVersion: JSCODE_VERSION
+                }
             }
-            fetch(errorReportHost,
+            fetch(host,
                 {
                     method: 'post',
                     headers : {
@@ -228,6 +264,7 @@ class DoctorStrangeUpdater {
 
 
     downLoadPatch = () => {
+        DoctorStrangeUpdaterModule.backUpVersion();
         //首先拷贝源文件
         let tempDataFile = SOURCE_ROOT+'/temp.zip';
         FS.copyFile(SOURCE_ROOT+'/doctor.zip', tempDataFile).then((value) => {
@@ -258,8 +295,10 @@ class DoctorStrangeUpdater {
                         (res) => {
                         FS.exists(res).then((exist) => {
                             if(exist){
-                                DoctorStrangeUpdaterModule.setMetaData(this.currentMetaData,DoctorStrangeUpdaterModule.currentMetaDataKey)
-                                DoctorStrangeUpdaterModule.setMetaData(DoctorStrangeUpdaterModule.currentMetaData,DoctorStrangeUpdaterModule.previousMetaDataKey)
+                                this.currentMetaData[DoctorStrangeUpdaterModule.firstLoadkey] = true;
+                                this.currentMetaData[DoctorStrangeUpdaterModule.firstLoadSuccess] = false;
+                                DoctorStrangeUpdaterModule.setMetaData(this.currentMetaData, DoctorStrangeUpdaterModule.currentMetaDataKey)
+                                DoctorStrangeUpdaterModule.setMetaData(DoctorStrangeUpdaterModule.currentMetaData, DoctorStrangeUpdaterModule.previousMetaDataKey)
                                 this.BUNDLE_PATH = res;
                                 if(this.options.askReload){
                                     this.options.askReload((reload) => {
@@ -311,6 +350,7 @@ class DoctorStrangeUpdater {
     }
 
     downLoadData = () => {
+        DoctorStrangeUpdaterModule.backUpVersion();
         const progress = (data) => {
             const percentage = data.bytesWritten/1024/1024;
             this.options.downloadProgress && this.options.downloadProgress(percentage);
@@ -335,6 +375,8 @@ class DoctorStrangeUpdater {
                 FS.exists(res).then((exist) => {
                     if(exist){
                         this.BUNDLE_PATH = res;
+                        this.currentMetaData[DoctorStrangeUpdaterModule.firstLoadkey] = true;
+                        this.currentMetaData[DoctorStrangeUpdaterModule.firstLoadSuccess] = false;
                         DoctorStrangeUpdaterModule.setMetaData(this.currentMetaData,DoctorStrangeUpdaterModule.currentMetaDataKey)
                         DoctorStrangeUpdaterModule.setMetaData(DoctorStrangeUpdaterModule.currentMetaData,DoctorStrangeUpdaterModule.previousMetaDataKey)
                         if(this.options.askReload){
@@ -366,4 +408,26 @@ class DoctorStrangeUpdater {
     }
 
 }
+
+let reload =  (err: Object) => {
+    DoctorStrangeUpdater.getDoctorStrangeUpdater().reportError(err, 'firstLoad fail');
+    DoctorStrangeUpdaterModule.getFirstLoad().then((obj) => {
+        //如果不是更新后第一次加载且第一次加载成功则按正常程序检查更新
+        if (obj.firstLoad && !obj.firstLoadSuccess) {
+            DoctorStrangeUpdaterModule.backToPre();
+        }
+    });
+}
+
+global.ErrorUtils.setGlobalHandler((err) => {
+    reload? reload(err) : null;
+});
+
+
+setTimeout( () =>  {
+    reload = null;
+    DoctorStrangeUpdater.getDoctorStrangeUpdater().setJsRunSuccess();
+}, 3000);
+
+
 module.exports = DoctorStrangeUpdater;

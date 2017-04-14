@@ -1,7 +1,7 @@
 # doctorstrange-updater  | 热更新客户端SDK
-热更新客户端SDK, 目前只实现了IOS版本，提供jsbundle更新以及静态资源更新，并支持了增量更新
+热更新客户端SDK, 目前只实现了IOS版本，提供jsbundle更新以及静态资源更新，并支持了**增量更新**,以及**版本回退**
 
-This project supports update static resources and incremental update( just for IOS now, later I will make it support Android) for react-native application.
+This plugin not only supports update js code and static resources but also supports incremental update( just for IOS now, later I will make it support Android) and revert update for react-native application.
 
 这个SDK需要配合一个后端进行使用，服务端工程地址[doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`")  (或者 [doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
 
@@ -72,9 +72,9 @@ The code below essentially follows these steps.
   DoctorStrangeUpdater* updater = [DoctorStrangeUpdater sharedInstance];
 
   NSURL* defaultMetadataFileLocation = [[NSBundle mainBundle] URLForResource:@"metadata" withExtension:@"json"];
-  [updater initializeWithUpdateMetadataUrl:[NSURL URLWithString:JS_CODE_METADATA_URL]
-                     defaultJSCodeLocation:defaultJSCodeLocation
-               defaultMetadataFileLocation:defaultMetadataFileLocation ];
+
+  [updater initializeWithUpdateMetadataUrl:defaultJSCodeLocation defaultMetadataFileLocation: defaultMetadataFileLocation];
+
 
   NSURL* latestJSCodeLocation = [updater latestJSCodeLocation];
 
@@ -102,6 +102,7 @@ let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater({
 	debugVersionHost: 'http://192.168.3.28:3002/update/version/selectlatest',
 
 	debugDownloadHost: 'http://192.168.3.28:3002/update/download',
+	debugErrorReportHost: 'http://192.168.0.156:3002/update/errorreport',
 	//set the versionhost to get the latest version | 检查js版本的地址
 	versionHost: `http://doctorstrange.songxiaocai.org/update/version/selectlatest`,
 	//source download server | 下载资源文件的地址
