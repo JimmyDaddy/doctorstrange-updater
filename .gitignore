@@ -2,7 +2,7 @@
 build/
 .idea/
 npm-debug.log
-.gradle/
+gradle/
 local.properties
 node_modules/.bin/
 node_modules/
