@@ -23,29 +23,18 @@ import java.util.Date;
 
 public class DoctorStrangeUpdater {
 
-    public static final String RNAU_SHARED_PREFERENCES = "doctorstrange_Updater_Shared_Preferences";
-    public static final String RNAU_STORED_VERSION = "doctorstrange_Updater_Stored_Version";
-    private final String RNAU_LAST_UPDATE_TIMESTAMP = "doctorstrange_Updater_Last_Update_Timestamp";
-    private final String RNAU_STORED_JS_FILENAME = "doctor.android.jsbundle";
-    private final String RNAU_STORED_JS_FOLDER = "JSCode";
+    public static final String DOCTOR_SHARED_PREFERENCES = "Doctorstrange_Updater_Shared_Preferences";
+    public static final String JS_VERSION = "Doctorstrange_Updater_Stored_Version";
+    private final String LAST_UPDATE_TIMESTAMP = "Doctorstrange_Updater_Last_Update_Timestamp";
+    private final String JS_BUNDLENAME = "doctor.jsbundle";
+    private final String JS_FOLDER = "JSCode";
 
-    public enum DoctorStrangeUpdaterFrequency {
-        EACH_TIME, DAILY, WEEKLY
-    }
-
-    public enum DoctorStrangeUpdaterUpdateType {
-        MAJOR, MINOR, PATCH
-    }
 
     private static DoctorStrangeUpdater ourInstance = new DoctorStrangeUpdater();
     private String updateMetadataUrl;
     private String metadataAssetName;
-    private DoctorStrangeUpdaterFrequency updateFrequency = DoctorStrangeUpdaterFrequency.EACH_TIME;
-    private DoctorStrangeUpdaterUpdateType updateType = DoctorStrangeUpdaterUpdateType.MINOR;
     private Context context;
-    private boolean showProgress = true;
-    private String hostname;
-    private Interface activity;
+    private boolean showInfo = true;//是否显示Toast
 
     public static DoctorStrangeUpdater getInstance(Context context) {
         ourInstance.context = context;
@@ -65,62 +54,23 @@ public class DoctorStrangeUpdater {
         return this;
     }
 
-    public DoctorStrangeUpdater setUpdateFrequency(DoctorStrangeUpdaterFrequency frequency) {
-        this.updateFrequency = frequency;
-        return this;
-    }
-
-    public DoctorStrangeUpdater setUpdateTypesToDownload(DoctorStrangeUpdaterUpdateType updateType) {
-        this.updateType = updateType;
-        return this;
-    }
-
-    public DoctorStrangeUpdater setHostnameForRelativeDownloadURLs(String hostnameForRelativeDownloadURLs) {
-        this.hostname = hostnameForRelativeDownloadURLs;
-        return this;
-    }
 
     public DoctorStrangeUpdater showProgress(boolean progress) {
-        this.showProgress = progress;
+        this.showInfo = progress;
         return this;
     }
 
-    public DoctorStrangeUpdater setParentActivity(Interface activity) {
-        this.activity = activity;
-        return this;
-    }
 
     public void checkForUpdates() {
-        if (this.shouldCheckForUpdates()) {
-            this.showProgressToast(R.string.auto_updater_checking);
-            FetchMetadataTask task = new FetchMetadataTask();
-            task.execute(this.updateMetadataUrl);
-        }
+        this.showProgressToast(R.string.auto_updater_checking);
+        FetchMetadataTask task = new FetchMetadataTask();
+        task.execute(this.updateMetadataUrl);
     }
 
-    private boolean shouldCheckForUpdates() {
-        if (this.updateFrequency == DoctorStrangeUpdaterFrequency.EACH_TIME) {
-            return true;
-        }
-
-        SharedPreferences prefs = context.getSharedPreferences(RNAU_SHARED_PREFERENCES, Context.MODE_PRIVATE);
-
-        long msSinceUpdate = System.currentTimeMillis() - prefs.getLong(RNAU_LAST_UPDATE_TIMESTAMP, 0);
-        int daysSinceUpdate = (int) (msSinceUpdate / 1000 / 60 / 60 / 24);
-
-        switch (this.updateFrequency) {
-            case DAILY:
-                return daysSinceUpdate >= 1;
-            case WEEKLY:
-                return daysSinceUpdate >= 7;
-            default:
-                return true;
-        }
-    }
 
     public String getLatestJSCodeLocation() {
-        SharedPreferences prefs = context.getSharedPreferences(RNAU_SHARED_PREFERENCES, Context.MODE_PRIVATE);
-        String currentVersionStr = prefs.getString(RNAU_STORED_VERSION, null);
+        SharedPreferences prefs = context.getSharedPreferences(DOCTOR_SHARED_PREFERENCES, Context.MODE_PRIVATE);
+        String currentVersionStr = prefs.getString(JS_VERSION, null);
 
         Version currentVersion;
         try {
@@ -141,12 +91,12 @@ public class DoctorStrangeUpdater {
                 Version assetVersion = new Version(assetVersionStr);
 
                 if (currentVersion.compareTo(assetVersion) > 0) {
-                    File jsCodeDir = context.getDir(RNAU_STORED_JS_FOLDER, Context.MODE_PRIVATE);
-                    File jsCodeFile = new File(jsCodeDir, RNAU_STORED_JS_FILENAME);
+                    File jsCodeDir = context.getDir(JS_FOLDER, Context.MODE_PRIVATE);
+                    File jsCodeFile = new File(jsCodeDir, JS_BUNDLENAME);
                     jsCodePath = jsCodeFile.getAbsolutePath();
                 } else {
                     SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString(RNAU_STORED_VERSION, currentVersionStr);
+                    editor.putString(JS_VERSION, currentVersionStr);
                     editor.apply();
                 }
             } catch (Exception e) {
@@ -171,76 +121,32 @@ public class DoctorStrangeUpdater {
         return jsonString;
     }
 
-    private void verifyMetadata(JSONObject metadata) {
-        try {
-            String version = metadata.getString("version");
-            String minContainerVersion = metadata.getString("minContainerVersion");
-            if (this.shouldDownloadUpdate(version, minContainerVersion)) {
-                this.showProgressToast(R.string.auto_updater_downloading);
-                String downloadURL = metadata.getJSONObject("url").getString("url");
-                if (metadata.getJSONObject("url").getBoolean("isRelative")) {
-                    if (this.hostname == null) {
-                        this.showProgressToast(R.string.auto_updater_no_hostname);
-                        System.out.println("No hostname provided for relative downloads. Aborting");
-                    } else {
-                        downloadURL = this.hostname + downloadURL;
-                    }
-                }
-                FetchUpdateTask updateTask = new FetchUpdateTask();
-                updateTask.execute(downloadURL, version);
-            } else {
-                this.showProgressToast(R.string.auto_updater_up_to_date);
-                System.out.println("Already Up to Date");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+//    private void verifyMetadata(JSONObject metadata) {
+//        try {
+//            String version = metadata.getString("version");
+//            String minContainerVersion = metadata.getString("minContainerVersion");
+//            if (this.shouldDownloadUpdate(version, minContainerVersion)) {
+//                this.showProgressToast(R.string.auto_updater_downloading);
+//                String downloadURL = metadata.getJSONObject("url").getString("url");
+//                if (metadata.getJSONObject("url").getBoolean("isRelative")) {
+//                    if (this.hostname == null) {
+//                        this.showProgressToast(R.string.auto_updater_no_hostname);
+//                        System.out.println("No hostname provided for relative downloads. Aborting");
+//                    } else {
+//                        downloadURL = this.hostname + downloadURL;
+//                    }
+//                }
+//                FetchUpdateTask updateTask = new FetchUpdateTask();
+//                updateTask.execute(downloadURL, version);
+//            } else {
+//                this.showProgressToast(R.string.auto_updater_up_to_date);
+//                System.out.println("Already Up to Date");
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
-    private boolean shouldDownloadUpdate(String versionStr, String minContainerVersionStr) {
-        boolean shouldDownload = false;
-
-        SharedPreferences prefs = context.getSharedPreferences(RNAU_SHARED_PREFERENCES, Context.MODE_PRIVATE);
-        String currentVersionStr = prefs.getString(RNAU_STORED_VERSION, null);
-        if (currentVersionStr == null) {
-            shouldDownload = true;
-        } else {
-            Version currentVersion = new Version(currentVersionStr);
-            Version updateVersion = new Version(versionStr);
-            switch (this.updateType) {
-                case MAJOR:
-                    if (currentVersion.compareMajor(updateVersion) < 0) {
-                        shouldDownload = true;
-                    }
-                    break;
-
-                case MINOR:
-                    if (currentVersion.compareMinor(updateVersion) < 0) {
-                        shouldDownload = true;
-                    }
-                    break;
-
-                case PATCH:
-                    if (currentVersion.compareTo(updateVersion) < 0) {
-                        shouldDownload = true;
-                    }
-                    break;
-
-                default:
-                    shouldDownload = true;
-                    break;
-            }
-        }
-
-        /*
-         * Then check if the update is good for our container version.
-         */
-        String containerVersionStr = this.getContainerVersion();
-        Version containerVersion = new Version(containerVersionStr);
-        Version minReqdContainerVersion = new Version(minContainerVersionStr);
-
-        return shouldDownload && containerVersion.compareTo(minReqdContainerVersion) >= 0;
-    }
 
     private String getContainerVersion() {
         String version = null;
@@ -253,12 +159,9 @@ public class DoctorStrangeUpdater {
         return version;
     }
 
-    private void updateDownloaded() {
-        this.activity.updateFinished();
-    }
 
     private void showProgressToast(int message) {
-        if (this.showProgress) {
+        if (this.showInfo) {
             if (Looper.myLooper() == null)
                 Looper.prepare();
             int duration = Toast.LENGTH_SHORT;
@@ -296,10 +199,10 @@ public class DoctorStrangeUpdater {
             return metadata;
         }
 
-        @Override
-        protected void onPostExecute(JSONObject jsonObject) {
-            DoctorStrangeUpdater.this.verifyMetadata(jsonObject);
-        }
+//        @Override
+//        protected void onPostExecute(JSONObject jsonObject) {
+//            DoctorStrangeUpdater.this.verifyMetadata(jsonObject);
+//        }
     }
 
     private class FetchUpdateTask extends AsyncTask<String, Void, String> {
@@ -333,11 +236,11 @@ public class DoctorStrangeUpdater {
 
                 // download the file
                 input = connection.getInputStream();
-                File jsCodeDir = context.getDir(RNAU_STORED_JS_FOLDER, Context.MODE_PRIVATE);
+                File jsCodeDir = context.getDir(JS_FOLDER, Context.MODE_PRIVATE);
                 if (!jsCodeDir.exists()) {
                     jsCodeDir.mkdirs();
                 }
-                File jsCodeFile = new File(jsCodeDir, RNAU_STORED_JS_FILENAME);
+                File jsCodeFile = new File(jsCodeDir, JS_BUNDLENAME);
                 output = new FileOutputStream(jsCodeFile);
 
                 byte data[] = new byte[4096];
@@ -351,10 +254,10 @@ public class DoctorStrangeUpdater {
                     output.write(data, 0, count);
                 }
 
-                SharedPreferences prefs = context.getSharedPreferences(RNAU_SHARED_PREFERENCES, Context.MODE_PRIVATE);
+                SharedPreferences prefs = context.getSharedPreferences(DOCTOR_SHARED_PREFERENCES, Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
-                editor.putString(RNAU_STORED_VERSION, params[1]);
-                editor.putLong(RNAU_LAST_UPDATE_TIMESTAMP, new Date().getTime());
+                editor.putString(JS_VERSION, params[1]);
+                editor.putLong(LAST_UPDATE_TIMESTAMP, new Date().getTime());
                 editor.apply();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -380,7 +283,6 @@ public class DoctorStrangeUpdater {
             if (result != null) {
                 DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_downloading_error);
             } else {
-                DoctorStrangeUpdater.this.updateDownloaded();
                 DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_downloading_success);
             }
         }

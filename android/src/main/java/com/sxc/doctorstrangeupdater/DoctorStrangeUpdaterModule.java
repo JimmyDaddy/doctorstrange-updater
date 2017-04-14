@@ -30,9 +30,9 @@ public class DoctorStrangeUpdaterModule extends ReactContextBaseJavaModule {
     public Map<String, Object> getConstants() {
         Map<String, Object> constants = new HashMap<String, Object>();
         SharedPreferences prefs = this.context.getSharedPreferences(
-                DoctorStrangeUpdater.RNAU_SHARED_PREFERENCES, Context.MODE_PRIVATE
+                DoctorStrangeUpdater.DOCTOR_SHARED_PREFERENCES, Context.MODE_PRIVATE
         );
-        String version =  prefs.getString(DoctorStrangeUpdater.RNAU_STORED_VERSION, null);
+        String version =  prefs.getString(DoctorStrangeUpdater.DOCTOR_SHARED_PREFERENCES, null);
         constants.put("jsCodeVersion", version);
         return constants;
     }
