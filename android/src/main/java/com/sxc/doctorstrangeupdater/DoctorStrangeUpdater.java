@@ -61,13 +61,6 @@ public class DoctorStrangeUpdater {
     }
 
 
-    public void checkForUpdates() {
-        this.showProgressToast(R.string.auto_updater_checking);
-        FetchMetadataTask task = new FetchMetadataTask();
-        task.execute(this.updateMetadataUrl);
-    }
-
-
     public String getLatestJSCodeLocation() {
         SharedPreferences prefs = context.getSharedPreferences(DOCTOR_SHARED_PREFERENCES, Context.MODE_PRIVATE);
         String currentVersionStr = prefs.getString(JS_VERSION, null);
@@ -121,31 +114,6 @@ public class DoctorStrangeUpdater {
         return jsonString;
     }
 
-//    private void verifyMetadata(JSONObject metadata) {
-//        try {
-//            String version = metadata.getString("version");
-//            String minContainerVersion = metadata.getString("minContainerVersion");
-//            if (this.shouldDownloadUpdate(version, minContainerVersion)) {
-//                this.showProgressToast(R.string.auto_updater_downloading);
-//                String downloadURL = metadata.getJSONObject("url").getString("url");
-//                if (metadata.getJSONObject("url").getBoolean("isRelative")) {
-//                    if (this.hostname == null) {
-//                        this.showProgressToast(R.string.auto_updater_no_hostname);
-//                        System.out.println("No hostname provided for relative downloads. Aborting");
-//                    } else {
-//                        downloadURL = this.hostname + downloadURL;
-//                    }
-//                }
-//                FetchUpdateTask updateTask = new FetchUpdateTask();
-//                updateTask.execute(downloadURL, version);
-//            } else {
-//                this.showProgressToast(R.string.auto_updater_up_to_date);
-//                System.out.println("Already Up to Date");
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
 
 
     private String getContainerVersion() {
@@ -160,7 +128,7 @@ public class DoctorStrangeUpdater {
     }
 
 
-    private void showProgressToast(int message) {
+    private void showToast(int message) {
         if (this.showInfo) {
             if (Looper.myLooper() == null)
                 Looper.prepare();
@@ -171,124 +139,4 @@ public class DoctorStrangeUpdater {
         }
     }
 
-    private class FetchMetadataTask extends AsyncTask<String, Void, JSONObject> {
-
-        @Override
-        protected JSONObject doInBackground(String... params) {
-            String metadataStr;
-            JSONObject metadata = null;
-            try {
-                URL url = new URL(params[0]);
-
-                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-                StringBuilder total = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    total.append(line);
-                }
-                metadataStr = total.toString();
-                if (!metadataStr.isEmpty()) {
-                    metadata = new JSONObject(metadataStr);
-                } else {
-                    DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_no_metadata);
-                }
-            } catch (Exception e) {
-                DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_invalid_metadata);
-                e.printStackTrace();
-            }
-            return metadata;
-        }
-
-//        @Override
-//        protected void onPostExecute(JSONObject jsonObject) {
-//            DoctorStrangeUpdater.this.verifyMetadata(jsonObject);
-//        }
-    }
-
-    private class FetchUpdateTask extends AsyncTask<String, Void, String> {
-
-        private PowerManager.WakeLock mWakeLock;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getName());
-            mWakeLock.acquire();
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            InputStream input = null;
-            FileOutputStream output = null;
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(params[0]);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.connect();
-
-                // expect HTTP 200 OK, so we don't mistakenly save error report
-                // instead of the file
-                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    return "Server returned HTTP " + connection.getResponseCode()
-                            + " " + connection.getResponseMessage();
-                }
-
-                // download the file
-                input = connection.getInputStream();
-                File jsCodeDir = context.getDir(JS_FOLDER, Context.MODE_PRIVATE);
-                if (!jsCodeDir.exists()) {
-                    jsCodeDir.mkdirs();
-                }
-                File jsCodeFile = new File(jsCodeDir, JS_BUNDLENAME);
-                output = new FileOutputStream(jsCodeFile);
-
-                byte data[] = new byte[4096];
-                int count;
-                while ((count = input.read(data)) != -1) {
-                    // allow canceling with back button
-                    if (isCancelled()) {
-                        input.close();
-                        return null;
-                    }
-                    output.write(data, 0, count);
-                }
-
-                SharedPreferences prefs = context.getSharedPreferences(DOCTOR_SHARED_PREFERENCES, Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString(JS_VERSION, params[1]);
-                editor.putLong(LAST_UPDATE_TIMESTAMP, new Date().getTime());
-                editor.apply();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return e.toString();
-            } finally {
-                try {
-                    if (output != null)
-                        output.close();
-                    if (input != null)
-                        input.close();
-                } catch (IOException ignored) {
-                }
-
-                if (connection != null)
-                    connection.disconnect();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            mWakeLock.release();
-            if (result != null) {
-                DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_downloading_error);
-            } else {
-                DoctorStrangeUpdater.this.showProgressToast(R.string.auto_updater_downloading_success);
-            }
-        }
-    }
-
-    public interface Interface {
-        void updateFinished();
-    }
 }

@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author rahul
- */
 public class DoctorStrangeUpdaterPackage implements ReactPackage {
 
     @Override
