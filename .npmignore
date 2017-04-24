@@ -1,2 +1,11 @@
+\*.iml
+build/
+.idea/
+npm-debug.log
+gradle/
+local.properties
+node_modules/.bin/
+node_modules/
+.DS_Store
 example/
 node_modules/
