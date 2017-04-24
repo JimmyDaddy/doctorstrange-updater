@@ -1,7 +1,7 @@
 # doctorstrange-updater  | 热更新客户端SDK
 热更新客户端SDK, 提供jsbundle更新以及静态资源更新，并支持了**增量更新**,以及**版本回退**
 
-This plugin not only supports update js code and static resources but also supports incremental update( just for IOS now, later I will make it support Android) and revert update for react-native application.
+This plugin not only supports update js code and static resources but also supports incremental update and revert update for react-native application.
 
 这个SDK需要配合一个后端进行使用，服务端工程地址[doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`")  (或者 [doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
 
