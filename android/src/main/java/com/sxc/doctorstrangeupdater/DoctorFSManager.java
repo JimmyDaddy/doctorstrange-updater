@@ -1,14 +1,19 @@
 package com.sxc.doctorstrangeupdater;
 
+import android.content.Context;
 import android.os.Environment;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
 
 import android.os.StatFs;
 import android.util.Base64;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -17,6 +22,8 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.net.URL;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -44,6 +51,7 @@ public class DoctorFSManager extends ReactContextBaseJavaModule {
         private static final String TemporaryDirectoryPath = "TemporaryDirectoryPath";
         private static final String CachesDirectoryPath = "CachesDirectoryPath";
         private static final String DocumentDirectory = "DocumentDirectory";
+        private static final String LibraryDirectoryPath = "LibraryDirectoryPath";
 
         private Downloader downloader = new Downloader();
 
@@ -210,7 +218,6 @@ public class DoctorFSManager extends ReactContextBaseJavaModule {
             try {
                 File file = new File(options.getString("toFile"));
                 URL url = new URL(options.getString("fromUrl"));
-                final int jobId = options.getInt("jobId");
                 ReadableMap headers = options.getMap("headers");
                 int progressDivider = options.getInt("progressDivider");
 
@@ -226,7 +233,6 @@ public class DoctorFSManager extends ReactContextBaseJavaModule {
                         if (res.exception == null) {
                             WritableMap infoMap = Arguments.createMap();
 
-                            infoMap.putInt("jobId", jobId);
                             infoMap.putInt("statusCode", res.statusCode);
                             infoMap.putInt("bytesWritten", res.bytesWritten);
 
@@ -247,12 +253,11 @@ public class DoctorFSManager extends ReactContextBaseJavaModule {
 
                         WritableMap data = Arguments.createMap();
 
-                        data.putInt("jobId", jobId);
                         data.putInt("statusCode", statusCode);
                         data.putInt("contentLength", contentLength);
                         data.putMap("headers", headersMap);
 
-                        sendEvent(getReactApplicationContext(), "DownloadBegin-" + jobId, data);
+                        sendEvent(getReactApplicationContext(), "DownloadBegin-", data);
                     }
                 };
 
@@ -260,11 +265,10 @@ public class DoctorFSManager extends ReactContextBaseJavaModule {
                     public void onDownloadProgress(int contentLength, int bytesWritten) {
                         WritableMap data = Arguments.createMap();
 
-                        data.putInt("jobId", jobId);
                         data.putInt("contentLength", contentLength);
                         data.putInt("bytesWritten", bytesWritten);
 
-                        sendEvent(getReactApplicationContext(), "DownloadProgress-" + jobId, data);
+                        sendEvent(getReactApplicationContext(), "DownloadProgress-", data);
                     }
                 };
 
@@ -278,36 +282,80 @@ public class DoctorFSManager extends ReactContextBaseJavaModule {
         }
 
         @ReactMethod
-        public void stopDownload(int jobId) {
+        public void stopDownload() {
                 downloader.stop();
         }
 
         @ReactMethod
-        public void pathForBundle(String bundleNamed, Promise promise) {
-            // TODO: Not sure what equilivent would be?
-        }
+        public void uzipFileAtPath(String origin, String destination, Promise promise){
+            try {
+                ZipFile zipFile = new ZipFile(origin);
+                Enumeration zList=zipFile.entries();
 
-        @ReactMethod
-        public void getFSInfo(Promise promise) {
-            File path = Environment.getDataDirectory();
-            StatFs stat = new StatFs(path.getPath());
-            long totalSpace;
-            long freeSpace;
-            if (android.os.Build.VERSION.SDK_INT >= 18) {
-                totalSpace = stat.getTotalBytes();
-                freeSpace = stat.getFreeBytes();
-            } else {
-                long blockSize = stat.getBlockSize();
-                totalSpace = blockSize * stat.getBlockCount();
-                freeSpace = blockSize * stat.getAvailableBlocks();
+                ZipEntry ze;
+                byte[] buf=new byte[1024];
+                while(zList.hasMoreElements()){
+                    ze=(ZipEntry)zList.nextElement();
+                    if(ze.isDirectory()){
+                        String dirstr = destination +"/" + ze.getName();
+                        File f=new File(dirstr);
+                        f.mkdir();
+                        continue;
+                    }
+                    OutputStream os=new BufferedOutputStream(new FileOutputStream(getRealFileName(destination, ze.getName())));
+                    InputStream is=new BufferedInputStream(zipFile.getInputStream(ze));
+                    int readLen=0;
+                    while ((readLen=is.read(buf, 0, 1024))!=-1) {
+                        os.write(buf, 0, readLen);
+                    }
+                    is.close();
+                    os.close();
+                }
+                zipFile.close();
+                File file = new File(destination+"/"+DoctorStrangeUpdaterConstants.BUNDLE_NAME);
+                if (file.exists()){
+                    promise.resolve(file.getAbsolutePath());
+                } else {
+                    promise.reject(DoctorStrangeUpdaterConstants.TAG, DoctorStrangeUpdaterConstants.CAN_NOT_FOUND_BUNDLE);
+                }
+            } catch (Exception e) {
+                Log.e(DoctorStrangeUpdaterConstants.TAG, "unZipFile: " + e.getMessage());
+                e.printStackTrace();
+                promise.reject(DoctorStrangeUpdaterConstants.TAG , e.getMessage());
             }
-            WritableMap info = Arguments.createMap();
-            info.putDouble("totalSpace", (double)totalSpace);   // Int32 too small, must use Double
-            info.putDouble("freeSpace", (double)freeSpace);
-            promise.resolve(info);
+
         }
 
-        private void reject(Promise promise, String filepath, Exception ex) {
+    /**
+     * get path of file
+     * @param baseDir
+     * @param absFileName
+     * @return
+     */
+    private File getRealFileName(String baseDir, String absFileName){
+        String[] dirs=absFileName.split("/");
+        File ret=new File(baseDir);
+        String substr = null;
+        Log.e(DoctorStrangeUpdaterConstants.TAG, "getRealFileName: "+dirs.length+" _ "+dirs[0]);
+        if(dirs.length>=1){
+            for (int i = 0; i < dirs.length-1;i++) {
+                substr = dirs[i];
+                ret = new File(ret, substr);
+            }
+            if(!ret.exists())
+                ret.mkdirs();
+            substr = dirs[dirs.length-1];
+            ret=new File(ret, substr);
+            return ret;
+        } else {
+            ret = new File(ret, absFileName);
+            return ret;
+        }
+    }
+
+
+
+    private void reject(Promise promise, String filepath, Exception ex) {
             if (ex instanceof FileNotFoundException) {
                 rejectFileNotFound(promise, filepath);
                 return;
@@ -347,6 +395,13 @@ public class DoctorFSManager extends ReactContextBaseJavaModule {
             } else {
                 constants.put(ExternalDirectoryPath, null);
             }
+
+            File libraryDirectoryPath = this.getReactApplicationContext().getDir("Library", Context.MODE_PRIVATE);
+            if (libraryDirectoryPath.exists() == false){
+                libraryDirectoryPath.mkdir();
+            }
+
+            constants.put(LibraryDirectoryPath, libraryDirectoryPath.getAbsolutePath());
 
             return constants;
         }

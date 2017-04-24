@@ -39,13 +39,14 @@ gradle.projectsEvaluated {
                     "${buildTypeName}"
 
             // React js bundle directories
+            def doctorRoot = "$buildDir/intermediates/assets/${targetPath}/doctor";
             def jsBundleDirConfigName = "jsBundleDir${targetName}"
             def jsBundleDir = elvisFile(config."$jsBundleDirConfigName") ?:
-                    file("$buildDir/intermediates/assets/${targetPath}/doctor")
+                    file(doctorRoot)
 
             def resourcesDirConfigName = "resourcesDir${targetName}"
             def resourcesDir = elvisFile(config."${resourcesDirConfigName}") ?:
-                    file("$buildDir/intermediates/assets/${targetPath}/doctor/assets")
+                    file("${doctorRoot}")
             def jsBundleFile = file("$jsBundleDir/$bundleAssetName")
 
             // Bundle task name for variant
@@ -58,8 +59,8 @@ gradle.projectsEvaluated {
             def currentBundleTask = tasks.create(
                     name: bundleJsAndAssetsTaskName,
                     type: Exec) {
-                group = "react"
-                description = "bundle JS and assets for ${targetName}."
+                group = "doctor"
+                description = "doctor bundle JS and assets for ${targetName}."
 
                 // Create dirs if they are not there (e.g. the "clean" task just ran)
                 doFirst {
@@ -91,14 +92,53 @@ gradle.projectsEvaluated {
                         targetName.toLowerCase().contains("release")
             }
 
+            def zipJsAndAssetsTaskName = "doctorZip${targetName}JsAndAssets"
+            def zipDir = "$buildDir/intermediates/assets/${targetPath}"
+
+            def doctorZipTask  = tasks.create(
+                    name: zipJsAndAssetsTaskName,
+                    type: Zip
+            ){
+                group = "doctor";
+                description = "zip bundle JS and assets for ${targetName}."
+                from jsBundleDir
+                from resourcesDir
+                archiveName 'doctor.zip'
+                destinationDir(file(zipDir))
+            }
+
+            def deleteJsAndAssetsTaskName = "doctorDelete${targetName}JsAndAssets"
+
+
+            def doctorDeleteResourcesTask = tasks.create(
+                    name: deleteJsAndAssetsTaskName,
+                    type: Delete
+            ){
+                group = "doctor";
+                description = "Delete bundle JS and assets for ${targetName}."
+                delete doctorRoot
+                followSymlinks = true
+
+            }
+
+            doctorZipTask.dependsOn(currentBundleTask.getName());
+            doctorDeleteResourcesTask.dependsOn(doctorZipTask.getName());
+
             // Hook bundle${productFlavor}${buildType}JsAndAssets into the android build process
             currentBundleTask.dependsOn("merge${targetName}Resources")
             currentBundleTask.dependsOn("merge${targetName}Assets")
 
-            runBefore("process${flavorNameCapitalized}Armeabi-v7a${buildNameCapitalized}Resources", currentBundleTask)
-            runBefore("process${flavorNameCapitalized}X86${buildNameCapitalized}Resources", currentBundleTask)
-            runBefore("processUniversal${targetName}Resources", currentBundleTask)
-            runBefore("process${targetName}Resources", currentBundleTask)
+            runBefore("bundle${targetName}JsAndAssets", currentBundleTask)
+            runBefore(deleteJsAndAssetsTaskName, doctorZipTask)
+
+
+            runBefore("process${flavorNameCapitalized}Armeabi-v7a${buildNameCapitalized}Resources", doctorDeleteResourcesTask)
+            runBefore("process${flavorNameCapitalized}X86${buildNameCapitalized}Resources", doctorDeleteResourcesTask)
+            runBefore("processUniversal${targetName}Resources", doctorDeleteResourcesTask)
+            runBefore("process${targetName}Resources", doctorDeleteResourcesTask)
+            runBefore("bundle${targetName}JsAndAssets", doctorDeleteResourcesTask)
+
+
         }
     }
 }

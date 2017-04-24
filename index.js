@@ -59,7 +59,7 @@ class DoctorStrangeUpdater {
             this.options = DEFAULT_OPTIONS;
         }
 
-        this.currentMetaData = DoctorStrangeUpdaterModule.currentMetaData;
+        this.currentMetaData = DoctorStrangeUpdaterModule.currentMetaData || {};
 
         const {versionHost, downloadHost, allowCellularDataUse, showInfo, DEBUG, debugVersionHost, debugDownloadHost} = this.options;
         // set hosts
@@ -224,7 +224,7 @@ class DoctorStrangeUpdater {
         if (!DoctorStrangeUpdater.instance) {
             DoctorStrangeUpdater.instance = new DoctorStrangeUpdater(options);
         } else {
-            if (options && Obj.isDifferent(this.options, options)) {
+            if (options) {
                 DoctorStrangeUpdater.instance = new DoctorStrangeUpdater(options);
             }
         }
@@ -320,6 +320,8 @@ class DoctorStrangeUpdater {
                         this.reportError(err, 'unzipfile error [patch]');
                     })
                 }).catch((err) => {
+                    console.log("patch err");
+
                     this.options.onError && this.options.onError();
 
                     this.reportError(err, 'patch error');
@@ -329,6 +331,7 @@ class DoctorStrangeUpdater {
                 this.reportError(err, 'download error');
             });
         }).catch((err) => {
+            console.log(err);
             this.downLoad();
             this.reportError(err, 'copy temp files error');
         });
@@ -388,12 +391,16 @@ class DoctorStrangeUpdater {
                         } else {
                             this.reload();
                         }
+                    } else {
+                        console.log("not exist ");
                     }
                 }).catch((err) => {
+                    console.log(err, "not exist");
                     this.options.onError && this.options.onError();
                     this.reportError(err, 'js bundle not exist error ');
                 });
             }).catch((err) => {
+                console.log(err, "unzip fail");
                 this.options.onError && this.options.onError();
                 this.reportError(err, 'unzipfile error ');
             })

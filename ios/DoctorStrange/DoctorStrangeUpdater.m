@@ -172,7 +172,6 @@ static bool isFirstAccess = YES;
              @"lastrCheckDate": lastCheckDateStr?: [NSNull null],
              @"firstLoadkey": DoctorStrangeUpdaterJsFirstLoad,
              @"firstLoadSuccess": DoctorStrangeUpdaterJsFirstLoadSuccess,
-             @"currentMetaData":metadata?: [NSNull null]
              };
 }
 
@@ -186,18 +185,20 @@ RCT_EXPORT_METHOD(patch:(NSString *)patchPath
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
-    if (![[NSFileManager defaultManager] fileExistsAtPath:patchPath]) {
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    
+    if (![fileManager fileExistsAtPath:patchPath]) {
         reject(PATCH_FILE_NOT_EXIST, @"patch文件不存在.", nil);
         return;
     }
     
-    if (![[NSFileManager defaultManager] fileExistsAtPath:origin]) {
+    if (![fileManager fileExistsAtPath:origin]) {
         reject(ORIGINAL_FILE_NOT_EXIST, @"originfile not exist.", nil);
         return;
     }
     
-    if ([[NSFileManager defaultManager] fileExistsAtPath:destination]) {
-        [[NSFileManager defaultManager] removeItemAtPath:destination error:nil];
+    if ([fileManager fileExistsAtPath:destination]) {
+        [fileManager removeItemAtPath:destination error:nil];
     }
     
     
@@ -206,6 +207,8 @@ RCT_EXPORT_METHOD(patch:(NSString *)patchPath
         reject(PATCH_FAIL, @"Patch error", nil);
         return;
     } else {
+        [fileManager removeItemAtPath:patchPath error:nil];
+        [fileManager removeItemAtPath:origin error:nil];
         resolve(destination);
         return;
     }

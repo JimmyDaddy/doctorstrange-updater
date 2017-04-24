@@ -9,6 +9,12 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+
+        ndk {
+            moduleName "doctorstrange"
+            ldLibs "log"
+            abiFilters "armeabi-v7a", "x86"
+        }
     }
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
@@ -17,7 +23,7 @@ android {
 
     sourceSets {
         main {
-            jni.srcDirs = []
+            jni.srcDirs = ["src/main/jni"]
         }
     }
 
@@ -25,5 +31,6 @@ android {
 }
 
 dependencies {
-    compile "com.facebook.react:react-native:+"
+    compile 'com.facebook.react:react-native:+'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
 }
