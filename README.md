@@ -113,23 +113,23 @@ import com.sxc.doctorstrangeupdater.DoctorStrangeUpdaterPackage;
 
 ```
 1.add code as follows in `getPackages()` | 在 `getPackages()`添加代码如下：
-> ```java
+```java
 @Override
 protected List<ReactPackage> getPackages() {
 	return Arrays.<ReactPackage>asList(
 			new MainReactPackage(),
 			new DoctorStrangeUpdaterPackage(getApplicationContext(), null),
 	);
-}```
-
+}
+```
 
 2. replace `getBundleAssetName()` with the method as follows | 替换 `getBundleAssetName()` 为下面的方法：
- > ```java
-        @Override
-        protected String getJSBundleFile() {
-            return DoctorStrangeUpdaterPackage.getJSBundleFile();
-        }
-		```
+```java
+    @Override
+    protected String getJSBundleFile() {
+        return DoctorStrangeUpdaterPackage.getJSBundleFile();
+    }
+```
 
 
 ### Common
