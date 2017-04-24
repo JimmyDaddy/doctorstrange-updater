@@ -3,9 +3,9 @@
 
 This plugin not only supports update js code and static resources but also supports incremental update and revert update for react-native application.
 
-这个SDK需要配合一个后端进行使用，服务端工程地址[doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`")  (或者 [doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
+这个SDK需要配合一个后端进行使用，服务端工程地址[doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`")  (或者 [doctorstrange](http://gitlab.songxiaocai.org/frontEndMiddleware/doctorstrange "`gitLab`"))
 
-this is a client SDK, and there is a server project named [doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`")  (or [doctorstrange](http://gitlab.songxiaocai.org/ios/doctorstrange "`gitLab`"))
+this is a client SDK, and there is a server project named [doctorstrange](https://github.com/JimmyDaddy/doctorstrange "`github`")  (or [doctorstrange](http://gitlab.songxiaocai.org/frontEndMiddleware/doctorstrange "`gitLab`"))
 
 ## SDK config | SDK配置
 
