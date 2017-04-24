@@ -4,7 +4,7 @@
   "peerDependencies": {
     "react-native": ">=0.18.0"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "dependencies": {
     "base-64": "^0.1.0",
     "utf8": "^2.1.2",
