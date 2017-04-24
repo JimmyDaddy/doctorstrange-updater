@@ -1,5 +1,5 @@
 # doctorstrange-updater  | 热更新客户端SDK
-热更新客户端SDK, 目前只实现了IOS版本，提供jsbundle更新以及静态资源更新，并支持了**增量更新**,以及**版本回退**
+热更新客户端SDK, 提供jsbundle更新以及静态资源更新，并支持了**增量更新**,以及**版本回退**
 
 This plugin not only supports update js code and static resources but also supports incremental update( just for IOS now, later I will make it support Android) and revert update for react-native application.
 
@@ -46,6 +46,22 @@ sdk需要使用上述json文件进行初始化
 	在`Build Settings`中搜索到`Header Search Paths`,添加`$(SRCROOT)/../node_modules/doctorstrange-updater`到列表中，并设置为`recursive`.
 
 
+## Android
+1. `npm install doctorstrange-updater --save`
+2. `react-native link doctorstrange-updater`
+3. add code as follows in your `settings.gradle` | 在 `setting.gradle`里添加如下代码 :
+ > `include ':doctorstrange-updater'`
+
+ > `
+	project(':doctorstrange-updater').projectDir = new File(rootProject.projectDir, '../node_modules/doctorstrange-updater/android')
+`
+4. add code as follows before or after `apply from: "../../node_modules/react-native/react.gradle"
+` in your `build.gradle` under `android/app/` |  在`android/app/build.gradle`中  `apply from: "../../node_modules/react-native/react.gradle"
+`之前或之后添加如下代码：
+ > `apply from: "../../node_modules/doctorstrange-updater/android/doctor.gradle"
+`
+
+5. [set your ndk configure](https://developer.android.com/ndk/guides/setup.html)
 
 ## Usage | 使用
 
@@ -89,6 +105,34 @@ The code below essentially follows these steps.
 }
 ```
 
+### Android
+
+in your `MainApplication.java` | 在 `MainApplication.java` 中引入包
+```java
+import com.sxc.doctorstrangeupdater.DoctorStrangeUpdaterPackage;
+
+```
+1.add code as follows in `getPackages()` | 在 `getPackages()`添加代码如下：
+> ```java
+@Override
+protected List<ReactPackage> getPackages() {
+	return Arrays.<ReactPackage>asList(
+			new MainReactPackage(),
+			new DoctorStrangeUpdaterPackage(getApplicationContext(), null),
+	);
+}```
+
+
+2. replace `getBundleAssetName()` with the method as follows | 替换 `getBundleAssetName()` 为下面的方法：
+ > ```java
+        @Override
+        protected String getJSBundleFile() {
+            return DoctorStrangeUpdaterPackage.getJSBundleFile();
+        }
+		```
+
+
+### Common
 3. Set other settiings on javascript | 在js中设置其他选项
 
 ```javascript
@@ -160,14 +204,9 @@ let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater({
 updater.checkUpdate();
 ```
 
-
-### Android
-
-To be Continue
-
 ## API
 
 | Name                    | exmaple  | Extra
 | ----------------------- | :-------:| -------
 | checkUpdate()     | ```let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater() updater.checkUpdate()``` OR```DoctorstrangeUpdater.getDoctorStrangeUpdater().checkUpdate()```    |
-| showMessageOnStatusBar(msg: String, color: string)| ```let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater()		updater.showMessageOnStatusBar('already Updated', '#ffaa33');``` OR ``` DoctorstrangeUpdater.getDoctorStrangeUpdater().showMessageOnStatusBar('already Updated', '#ffaa33');```   |IOS only
+| showMessageOnStatusBar(msg: String, color: string)| ```let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater()		updater.showMessageOnStatusBar('already Updated', '#ffaa33');``` OR ``` DoctorstrangeUpdater.getDoctorStrangeUpdater().showMessageOnStatusBar('already Updated', '#ffaa33');```   |
