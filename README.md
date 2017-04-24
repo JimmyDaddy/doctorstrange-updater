@@ -38,7 +38,7 @@ sdk需要使用上述json文件进行初始化
 
 1. `npm install doctorstrange-updater --save`
 2. `react-native link doctorstrange-updater`
-3. In the Xcode Project Navigator, click the root project, and in `build phases` tab, look for `Linked Frameworks and Libraries`. Click on the `+` button at the bottom and add `libDoctorstrangeUpdater.a` `libz.tbd` `libz2.1.0.tbd` from the list.
+3. In the Xcode Project Navigator, click the root project, and in `build phases` tab, look for `Linked Frameworks and Libraries`. Click on the `+` button at the bottom and add `libDoctorstrangeUpdater.a` `libz.tbd` `libbz2.1.0.tbd` from the list.
 
 	在Xcode中点击工程，点击到`Build Phases`，找到`Linked Frameworks and Libraries`. 点击底部的 `+`  然后添加 `libDoctorstrangeUpdater.a` `libz.tbd` `libz2.1.0.tbd` 到列表中.
 4. Go to `Build Settings` tab and search for `Header Search Paths`. In the list, add `$(SRCROOT)/../node_modules/doctorstrange-updater` and select `recursive`.
