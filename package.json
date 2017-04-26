@@ -1,5 +1,5 @@
 {
-    "name": "doctorstrange-updater",
+    "name": "react-native-doctorstrange-updater",
     "optionalDependencies": {},
     "peerDependencies": {
         "react-native": ">=0.18.0"
