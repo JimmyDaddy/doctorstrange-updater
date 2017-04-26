@@ -1,29 +1,29 @@
 {
-  "name": "doctorstrange-updater",
-  "optionalDependencies": {},
-  "peerDependencies": {
-    "react-native": ">=0.18.0"
-  },
-  "version": "0.2.1",
-  "dependencies": {
-    "base-64": "^0.1.0",
-    "utf8": "^2.1.2",
-    "whatwg-fetch": "^2.0.3"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/JimmyDaddy/doctorstrange-updater.git"
-  },
-  "keywords": [
-    "react-native",
-    "hot update",
-    "hot fix",
-    "react"
-  ],
-  "author": "jimmydaddy",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/JimmyDaddy/doctorstrange-updater/issues"
-  },
-  "homepage": "https://github.com/JimmyDaddy/doctorstrange-updater#readme"
+    "name": "doctorstrange-updater",
+    "optionalDependencies": {},
+    "peerDependencies": {
+        "react-native": ">=0.18.0"
+    },
+    "version": "0.2.1",
+    "dependencies": {
+        "base-64": "^0.1.0",
+        "utf8": "^2.1.2",
+        "whatwg-fetch": "^2.0.3"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/JimmyDaddy/doctorstrange-updater.git"
+    },
+    "keywords": [
+        "react-native",
+        "hot update",
+        "hot fix",
+        "react"
+    ],
+    "author": "jimmydaddy",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/JimmyDaddy/doctorstrange-updater/issues"
+    },
+    "homepage": "https://github.com/JimmyDaddy/doctorstrange-updater#readme"
 }

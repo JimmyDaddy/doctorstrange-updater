@@ -232,9 +232,9 @@
 			remoteGlobalIDString = 58B5119B1A9E6C1200147676;
 			remoteInfo = RCTText;
 		};
-		A1390D2E1EADD1FA002390CC /* PBXContainerItemProxy */ = {
+		A15904AB1EB0A3CF00BE231B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 1B0E3136D0FE4258B203B6A9 /* DoctorStrange.xcodeproj */;
+			containerPortal = FD666C4B21054BC386561148 /* DoctorStrange.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = B781E74E1C52EC0100F23A25;
 			remoteInfo = DoctorStrange;
@@ -261,7 +261,6 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = example/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = example/main.m; sourceTree = "<group>"; };
 		146833FF1AC3E56700842450 /* React.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = React.xcodeproj; path = "../node_modules/react-native/React/React.xcodeproj"; sourceTree = "<group>"; };
-		1B0E3136D0FE4258B203B6A9 /* DoctorStrange.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = DoctorStrange.xcodeproj; path = "../node_modules/doctorstrange-updater/ios/DoctorStrange.xcodeproj"; sourceTree = "<group>"; };
 		2D02E47B1E0B4A5D006451C7 /* example-tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "example-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D02E4901E0B4A5D006451C7 /* example-tvOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "example-tvOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E91572D1DD0AC6500FF2AA8 /* RCTAnimation.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTAnimation.xcodeproj; path = "../node_modules/react-native/Libraries/NativeAnimation/RCTAnimation.xcodeproj"; sourceTree = "<group>"; };
@@ -271,6 +270,7 @@
 		A1390D4C1EADD3E5002390CC /* libbz2.1.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.1.0.tbd; path = usr/lib/libbz2.1.0.tbd; sourceTree = SDKROOT; };
 		A1390D4E1EADD467002390CC /* metadata.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = metadata.json; sourceTree = "<group>"; };
 		CBE9BE593EB746B180D5321C /* libDoctorStrange.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libDoctorStrange.a; sourceTree = "<group>"; };
+		FD666C4B21054BC386561148 /* DoctorStrange.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = DoctorStrange.xcodeproj; path = "../node_modules/react-native-doctorstrange-updater/ios/DoctorStrange.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -467,7 +467,7 @@
 				832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */,
 				00C302DF1ABCB9EE00DB3ED1 /* RCTVibration.xcodeproj */,
 				139FDEE61B06529A00C62182 /* RCTWebSocket.xcodeproj */,
-				1B0E3136D0FE4258B203B6A9 /* DoctorStrange.xcodeproj */,
+				FD666C4B21054BC386561148 /* DoctorStrange.xcodeproj */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
@@ -505,14 +505,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A1390D2B1EADD1FA002390CC /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				A1390D2F1EADD1FA002390CC /* libDoctorStrange.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		A1390D491EADD39E002390CC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -520,6 +512,14 @@
 				A1390D4A1EADD39E002390CC /* libz.tbd */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A15904A81EB0A3CF00BE231B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A15904AC1EB0A3CF00BE231B /* libDoctorStrange.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -634,8 +634,8 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = A1390D2B1EADD1FA002390CC /* Products */;
-					ProjectRef = 1B0E3136D0FE4258B203B6A9 /* DoctorStrange.xcodeproj */;
+					ProductGroup = A15904A81EB0A3CF00BE231B /* Products */;
+					ProjectRef = FD666C4B21054BC386561148 /* DoctorStrange.xcodeproj */;
 				},
 				{
 					ProductGroup = 00C302A81ABCB8CE00DB3ED1 /* Products */;
@@ -868,11 +868,11 @@
 			remoteRef = 832341B41AAA6A8300B99B32 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		A1390D2F1EADD1FA002390CC /* libDoctorStrange.a */ = {
+		A15904AC1EB0A3CF00BE231B /* libDoctorStrange.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = libDoctorStrange.a;
-			remoteRef = A1390D2E1EADD1FA002390CC /* PBXContainerItemProxy */;
+			remoteRef = A15904AB1EB0A3CF00BE231B /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -1017,6 +1017,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../node_modules/doctorstrange-updater/ios/**",
+					"$(SRCROOT)/../node_modules/react-native-doctorstrange-updater/ios/**",
 				);
 				INFOPLIST_FILE = exampleTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -1042,6 +1043,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../node_modules/doctorstrange-updater/ios/**",
+					"$(SRCROOT)/../node_modules/react-native-doctorstrange-updater/ios/**",
 				);
 				INFOPLIST_FILE = exampleTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -1068,6 +1070,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../node_modules/doctorstrange-updater/ios/**",
+					"$(SRCROOT)/../node_modules/react-native-doctorstrange-updater/ios/**",
 				);
 				INFOPLIST_FILE = example/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1089,6 +1092,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../node_modules/doctorstrange-updater/ios/**",
+					"$(SRCROOT)/../node_modules/react-native-doctorstrange-updater/ios/**",
 				);
 				INFOPLIST_FILE = example/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1117,6 +1121,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../node_modules/doctorstrange-updater/ios/**",
+					"$(SRCROOT)/../node_modules/react-native-doctorstrange-updater/ios/**",
 				);
 				INFOPLIST_FILE = "example-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1151,6 +1156,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/../node_modules/doctorstrange-updater/ios/**",
+					"$(SRCROOT)/../node_modules/react-native-doctorstrange-updater/ios/**",
 				);
 				INFOPLIST_FILE = "example-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

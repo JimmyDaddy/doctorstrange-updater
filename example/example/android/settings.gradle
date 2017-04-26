@@ -1,5 +1,5 @@
 rootProject.name = 'example'
-include ':doctorstrange-updater'
-project(':doctorstrange-updater').projectDir = new File(rootProject.projectDir, '../node_modules/doctorstrange-updater/android')
+include ':react-native-doctorstrange-updater'
+project(':react-native-doctorstrange-updater').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-doctorstrange-updater/android')
 
 include ':app'
