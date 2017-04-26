@@ -64,7 +64,7 @@ import com.android.build.OutputFile
  *   extraPackagerArgs: []
  * ]
  */
-apply from: "../../node_modules/doctorstrange-updater/android/doctor.gradle"
+apply from: "../../node_modules/react-native-doctorstrange-updater/android/doctor.gradle"
 apply from: "../../node_modules/react-native/react.gradle"
 
 /**
@@ -143,7 +143,7 @@ android {
 }
 
 dependencies {
-    compile project(':doctorstrange-updater')
+    compile project(':react-native-doctorstrange-updater')
     compile fileTree(dir: "libs", include: ["*.jar"])
     compile "com.android.support:appcompat-v7:23.0.1"
     compile "com.facebook.react:react-native:+"  // From node_modules

@@ -1,4 +1,4 @@
-# doctorstrange-updater  | 热更新客户端SDK
+# react-native-doctorstrange-updater  | 热更新客户端SDK
 热更新客户端SDK, 提供jsbundle更新以及静态资源更新，并支持了**增量更新**,以及**版本回退**
 
 This plugin not only supports update js code and static resources but also supports incremental update and revert update for react-native application.
@@ -36,29 +36,29 @@ sdk需要使用上述json文件进行初始化
 
 ### IOS
 
-1. `npm install doctorstrange-updater --save`
-2. `react-native link doctorstrange-updater`
+1. `npm install react-native-doctorstrange-updater --save`
+2. `react-native link react-native-doctorstrange-updater`
 3. In the Xcode Project Navigator, click the root project, and in `build phases` tab, look for `Linked Frameworks and Libraries`. Click on the `+` button at the bottom and add `libDoctorstrangeUpdater.a` `libz.tbd` `libbz2.1.0.tbd` from the list.
 
 	在Xcode中点击工程，点击到`Build Phases`，找到`Linked Frameworks and Libraries`. 点击底部的 `+`  然后添加 `libDoctorstrangeUpdater.a` `libz.tbd` `libz2.1.0.tbd` 到列表中.
-4. Go to `Build Settings` tab and search for `Header Search Paths`. In the list, add `$(SRCROOT)/../node_modules/doctorstrange-updater` and select `recursive`.
+4. Go to `Build Settings` tab and search for `Header Search Paths`. In the list, add `$(SRCROOT)/../node_modules/react-native-doctorstrange-updater` and select `recursive`.
 
-	在`Build Settings`中搜索到`Header Search Paths`,添加`$(SRCROOT)/../node_modules/doctorstrange-updater`到列表中，并设置为`recursive`.
+	在`Build Settings`中搜索到`Header Search Paths`,添加`$(SRCROOT)/../node_modules/react-native-doctorstrange-updater`到列表中，并设置为`recursive`.
 
 
 ## Android
-1. `npm install doctorstrange-updater --save`
-2. `react-native link doctorstrange-updater`
+1. `npm install react-native-doctorstrange-updater --save`
+2. `react-native link react-native-doctorstrange-updater`
 3. add code as follows in your `settings.gradle` | 在 `setting.gradle`里添加如下代码 :
- > `include ':doctorstrange-updater'`
+ > `include ':react-native-doctorstrange-updater'`
 
  > `
-	project(':doctorstrange-updater').projectDir = new File(rootProject.projectDir, '../node_modules/doctorstrange-updater/android')
+	project(':react-native-doctorstrange-updater').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-doctorstrange-updater/android')
 `
 4. add code as follows before or after `apply from: "../../node_modules/react-native/react.gradle"
 ` in your `build.gradle` under `android/app/` |  在`android/app/build.gradle`中  `apply from: "../../node_modules/react-native/react.gradle"
 `之前或之后添加如下代码：
- > `apply from: "../../node_modules/doctorstrange-updater/android/doctor.gradle"
+ > `apply from: "../../node_modules/react-native-doctorstrange-updater/android/doctor.gradle"
 `
 
 5. [set your ndk configure](https://developer.android.com/ndk/guides/setup.html)
@@ -137,7 +137,7 @@ protected List<ReactPackage> getPackages() {
 
 ```javascript
 //first, import updater
-import DoctorstrangeUpdater from 'doctorstrange-updater';
+import DoctorstrangeUpdater from 'react-native-doctorstrange-updater';
 //then initial with options | 初始化
 let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater({
 	//mode | 开发模式
