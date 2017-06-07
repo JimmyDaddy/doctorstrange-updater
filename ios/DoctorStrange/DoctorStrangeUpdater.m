@@ -1,3 +1,15 @@
+/**
+ * @Author: jimmydaddy
+ * @Date:   2016-07-24 01:28:58
+ * @Email:  heyjimmygo@gmail.com
+ * @Filename: DoctorStrangeUpdater.m
+ * @Last modified by:   jimmydaddy
+ * @Last modified time: 2017-06-07 11:24:55
+ * @License: GNU General Public License（GPL)
+ * @Copyright: ©2015-2017 www.songxiaocai.com 宋小菜 All Rights Reserved.
+ */
+
+
 
 #if __has_include(<React/RCTBridge.h>)
 #import <React/RCTBridge.h>
@@ -140,31 +152,31 @@ static bool isFirstAccess = YES;
         updateFirstLoad = [[metadata objectForKey:DoctorStrangeUpdaterJsFirstLoad] boolValue];
         updateFirstLoadSucess = [[metadata objectForKey:DoctorStrangeUpdaterJsFirstLoadSuccess] boolValue];
     }
-    
+
     NSString* lastCheckDateStr = nil;
-    
+
     NSDateFormatter *dateFormatter =[[NSDateFormatter alloc] init];
-    
+
     // 设置日期格式
     [dateFormatter setDateFormat:@"YYYY-mm-dd hh:mm:ss"];
-    
+
     if (lastCheckDate) {
         lastCheckDateStr = [dateFormatter stringFromDate:lastCheckDate];
     } else {
         lastCheckDateStr = [dateFormatter stringFromDate:[NSDate date]];
     }
     UIDevice *currentDevice = [UIDevice currentDevice];
-    
+
     return @{
              @"jsCodeVersion": version?: [NSNull null],
-             @"bundleIdentifier": [[NSBundle mainBundle] bundleIdentifier],
+             @"bundleIdentifier": [[NSBundle mainBundle] bundleIdentifier]?: [NSNull null],
              @"minContainerBuidNumber": minContainerBuidNumber?: [NSNull null],
              @"description": description?: [NSNull null],
              @"minContainerVersion": minContainerVersion?: [NSNull null],
-             @"systemVersion": currentDevice.systemVersion,
+             @"systemVersion": currentDevice.systemVersion?: [NSNull null],
              @"brand": @"Apple",
-             @"buildNumber": [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"],
-             @"appVersion": [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
+             @"buildNumber": [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]?: [NSNull null],
+             @"appVersion": [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"]?: [NSNull null],
              @"currentMetaDataKey": DoctorStrangeUpdaterCurrentJSCodeMetadata,
              @"previousMetaDataKey": DoctorStrangeUpdaterPreviousJSCodeMetaData,
              @"currentMetaData": metadata?: [NSNull null],
@@ -186,22 +198,22 @@ RCT_EXPORT_METHOD(patch:(NSString *)patchPath
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     NSFileManager* fileManager = [NSFileManager defaultManager];
-    
+
     if (![fileManager fileExistsAtPath:patchPath]) {
         reject(PATCH_FILE_NOT_EXIST, @"patch文件不存在.", nil);
         return;
     }
-    
+
     if (![fileManager fileExistsAtPath:origin]) {
         reject(ORIGINAL_FILE_NOT_EXIST, @"originfile not exist.", nil);
         return;
     }
-    
+
     if ([fileManager fileExistsAtPath:destination]) {
         [fileManager removeItemAtPath:destination error:nil];
     }
-    
-    
+
+
     int err = beginPatch([origin UTF8String], [destination UTF8String], [patchPath UTF8String]);
     if (err) {
         reject(PATCH_FAIL, @"Patch error", nil);
@@ -235,8 +247,8 @@ RCT_EXPORT_METHOD(getFirstLoad:(RCTPromiseResolveBlock)resolve
     } else {
         return reject(@"load metadata fail", @"load metadata fail", nil);
     }
-    
-    
+
+
 }
 
 
@@ -248,7 +260,7 @@ RCT_EXPORT_METHOD(setMetaData:(NSDictionary*) obj
     } @catch (NSException *exception) {
         NSLog(@"set nata data fail: %@", exception.reason);
     } @finally {
-        
+
     }
 }
 
@@ -258,7 +270,7 @@ RCT_EXPORT_METHOD(showInfo: (BOOL)showInfo){
 
 RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
                   color: (nullable NSString*) color){
-    
+
     UIColor* uiColor = nil;
 
     if (color != nil) {
@@ -266,8 +278,8 @@ RCT_EXPORT_METHOD(showMessageOnStatusBar:(NSString*) msg
     } else {
         uiColor = [StatusBarNotification successColor];
     }
-    
-    
+
+
     [StatusBarNotification showWithMessage:NSLocalizedString(msg, nil) backgroundColor:uiColor autoHide:YES];
 }
 
@@ -307,7 +319,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
     } else {
         return reject(ERROR_BACK_UP, @"error backup", error);
     }
-    
+
 }
 
 
@@ -328,7 +340,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
  * 备份文件
  **/
 -(BOOL)backUp: (NSError*) error{
-    
+
     NSFileManager* fileManager = [NSFileManager defaultManager];
     NSString* assets =  [[self getJsCodeDir] stringByAppendingPathComponent:ASSERTS_NAME];
     NSString* backupAssets = [[self getPreversionDir] stringByAppendingPathComponent:ASSERTS_NAME];
@@ -366,7 +378,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
             return NO;
         }
     }
-    
+
     return NO;
 }
 
@@ -513,20 +525,20 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
     unsigned int red,green,blue;
     NSRange range;
     range.length = 2;
-    
+
     range.location = 0;
     /* 调用下面的方法处理字符串 */
     red = [self stringToInt:[string substringWithRange:range]];
-    
+
     range.location = 2;
     green = [self stringToInt:[string substringWithRange:range]];
     range.location = 4;
     blue = [self stringToInt:[string substringWithRange:range]];
-    
+
     return [UIColor colorWithRed:(float)(red/255.0f) green:(float)(green / 255.0f) blue:(float)(blue / 255.0f) alpha:1.0f];
 }
 - (int)stringToInt:(NSString *)string {
-    
+
     unichar hex_char1 = [string characterAtIndex:0]; /* 两位16进制数中的第一位(高位*16) */
     int int_ch1;
     if (hex_char1 >= '0' && hex_char1 <= '9')
@@ -637,7 +649,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
         }
         return YES;
     }
-    
+
 }
 
 /**
@@ -665,7 +677,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
 
     NSData* data = [NSData dataWithContentsOfURL:self.defaultJSCodeLocation];
     NSString* filename = [NSString stringWithFormat:@"%@/%@", [self createCodeDirectory], BUNDLE_NAME];
-    
+
     if ([data writeToFile:filename atomically:YES]) {
         //首先拿到打包文件中的本地版本信息文件，开发者务必要确定该文件的正确性
         NSData* fileMetadata = [NSData dataWithContentsOfURL: metadataFileLocation];
@@ -688,7 +700,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
             self.initializationOK = NO;
             return NO;
         }
-        
+
         NSUserDefaults* settings = [NSUserDefaults standardUserDefaults];
         [settings setObject:localMetadata forKey:DoctorStrangeUpdaterCurrentJSCodeMetadata];
         [settings synchronize]; //立即持久化
@@ -701,7 +713,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
         return NO;
 
     }
-    
+
 }
 
 /**
@@ -726,7 +738,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
         }
         return NO;
     }
-    
+
     if (![[NSFileManager defaultManager] fileExistsAtPath:origin]) {
         if (self.showInfo) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"originfile not exist.", nil)
@@ -735,30 +747,30 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
         }
         return NO;
     }
-    
+
     NSFileManager* fileManager = [NSFileManager defaultManager];
-    
+
     if ([fileManager fileExistsAtPath:destination]) {
         [fileManager removeItemAtPath:destination error:nil];
     }
-    
-    
-    
+
+
+
     int err = beginPatch([origin UTF8String], [destination UTF8String], [patchPath UTF8String]);
     if (err) {
         return NO;
     }
-    
+
     dispatch_async(_updateQueue, ^{
         if ([fileManager fileExistsAtPath:patchPath]) {
             [fileManager removeItemAtPath:patchPath error:nil];
         }
-        
+
         if ([fileManager fileExistsAtPath:origin]) {
             [fileManager removeItemAtPath:origin error:nil];
         }
     });
-    
+
     return YES;
 }
 
@@ -803,16 +815,16 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
 -(NSString*) createPreCodeDirectory{
     NSString* filePathAndDirectory = [[self getJsCodeDir] stringByAppendingPathComponent:PRE_ROOT];
     NSError *error;
-    
+
     NSFileManager* fileManager = [NSFileManager defaultManager];
-    
+
     BOOL isDir;
     if ([fileManager fileExistsAtPath:filePathAndDirectory isDirectory:&isDir]) {
         if (isDir) {
             return filePathAndDirectory;
         }
     }
-    
+
     if (![fileManager createDirectoryAtPath:filePathAndDirectory
                 withIntermediateDirectories:YES
                                  attributes:nil
@@ -822,7 +834,7 @@ RCT_EXPORT_METHOD(backUpVersion:(RCTPromiseResolveBlock)resolve
         if (self.showInfo) {
             [StatusBarNotification showWithMessage:NSLocalizedString(@"Create directory error: %@", error) backgroundColor:[StatusBarNotification errorColor] autoHide:YES];
         }
-        
+
         return nil;
     }
     return filePathAndDirectory;
