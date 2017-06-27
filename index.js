@@ -1,3 +1,15 @@
+/**
+ * @Author: jimmydaddy
+ * @Date:   2017-04-24 01:28:58
+ * @Email:  heyjimmygo@gmail.com
+ * @Filename: index.js
+ * @Last modified by:   jimmydaddy
+ * @Last modified time: 2017-06-27 01:41:15
+ * @License: GNU General Public License（GPL)
+ * @Copyright: ©2015-2017 www.songxiaocai.com 宋小菜 All Rights Reserved.
+ */
+
+
 
 'use strict';
 
@@ -22,9 +34,15 @@ const  DEFAULT_VERSION_HOST = 'http://doctorstrange.songxiaocai.org/update/versi
 //default data download host
 const  DEFAULT_DATA_DOWNLOAD_HOST = 'http://doctorstrange.songxiaocai.org/update/download';
 
+const  DEFAULT_DEBUG_VERSION_HOST = 'http://test.doctorstrange.songxiaocai.org/update/version/selectlatest';
+
+const  DEFAULT_DEBUG_DATA_DOWNLOAD_HOST = 'http://test.doctorstrange.songxiaocai.org/update/download';
+
 const DEFAULT_OPTIONS = {
     versionHost: DEFAULT_VERSION_HOST,
     downloadHost: DEFAULT_DATA_DOWNLOAD_HOST,
+    debugVersionHost: DEFAULT_DEBUG_VERSION_HOST,
+    debugDownloadHost: DEFAULT_DEBUG_DATA_DOWNLOAD_HOST
 }
 
 
@@ -65,8 +83,8 @@ class DoctorStrangeUpdater {
         // set hosts
 
         if (DEBUG) {
-            this.versionHost = debugVersionHost || DEFAULT_VERSION_HOST;
-            this.downloadHost = debugDownloadHost || DEFAULT_DATA_DOWNLOAD_HOST;
+            this.versionHost = debugVersionHost || DEFAULT_DEBUG_VERSION_HOST;
+            this.downloadHost = debugDownloadHost || DEFAULT_DEBUG_DATA_DOWNLOAD_HOST;
         } else {
             this.versionHost = versionHost || DEFAULT_VERSION_HOST;
             this.downloadHost = downloadHost || DEFAULT_DATA_DOWNLOAD_HOST;
