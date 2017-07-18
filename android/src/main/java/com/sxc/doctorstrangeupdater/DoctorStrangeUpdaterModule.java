@@ -1,3 +1,14 @@
+/**
+ * @Author: jimmydaddy
+ * @Date:   2017-04-24 01:28:58
+ * @Email:  heyjimmygo@gmail.com
+ * @Filename: DoctorStrangeUpdaterModule.java
+ * @Last modified by:   jimmydaddy
+ * @Last modified time: 2017-07-18 06:26:31
+ * @License: GNU General Public License（GPL)
+ * @Copyright: ©2015-2017 www.songxiaocai.com 宋小菜 All Rights Reserved.
+ */
+
 package com.sxc.doctorstrangeupdater;
 
 import android.app.Activity;
@@ -398,12 +409,12 @@ public class DoctorStrangeUpdaterModule extends ReactContextBaseJavaModule {
                     //设置app已经第一次打开过了
                     doctorStrangeUpdater.afterFirstOpenInit();
 
-                    showToast("初始化成功", DoctorStrangeUpdaterConstants.COLOR_SUCCESS);
+                    // showToast("初始化成功", DoctorStrangeUpdaterConstants.COLOR_SUCCESS);
 
             } catch (Exception e){
                     e.printStackTrace();
-                    showToast("初始化失败"+e.getMessage(), DoctorStrangeUpdaterConstants.COLOR_ERROR);
-                    Log.e(TAG, "initBeforeStartUp: " + e.getMessage());
+                    // showToast("初始化失败"+e.getMessage(), DoctorStrangeUpdaterConstants.COLOR_ERROR);
+                    Log.e(TAG, "初始化失败 initBeforeStartUp: " + e.getMessage());
                 }
             }
         }
