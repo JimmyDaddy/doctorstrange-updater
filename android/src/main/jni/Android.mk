@@ -3,6 +3,8 @@ Local_PATH:=$(call.my-dir)//必须位于文件最开始。用来定位源文件�
 
 include $(CLEAR_VARS)
 
+APP_DEPRECATED_HEADERS := true // Using Unified Headers
+
 Local_MODEL:= doctorstrange  //此句指定.so文件的名称
 
 LOCAL_SRC_FILES := \

@@ -7,3 +7,4 @@ local.properties
 node_modules/.bin/
 node_modules/
 .DS_Store
+.vscode/
