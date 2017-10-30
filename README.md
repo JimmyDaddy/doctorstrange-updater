@@ -61,7 +61,7 @@ sdk需要使用上述json文件进行初始化
  > `apply from: "../../node_modules/react-native-doctorstrange-updater/android/doctor.gradle"
 `
 
-5. [set your ndk configure](https://developer.android.com/ndk/guides/setup.html)
+5. [set your ndk configure](https://developer.android.com/ndk/guides/setup.html) (the new version 1.0.4 is no need NDK any more)(新版本1.0.4不再需要ndk配置)
 
 ## Usage | 使用
 
