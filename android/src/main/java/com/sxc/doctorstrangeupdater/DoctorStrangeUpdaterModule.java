@@ -277,16 +277,16 @@ public class DoctorStrangeUpdaterModule extends ReactContextBaseJavaModule {
                         ReactInstanceManager instanceManager = ((ReactApplication) application).getReactNativeHost().getReactInstanceManager();
 
 
-                        if (instanceManager.getClass().getSimpleName().equals("XReactInstanceManagerImpl")) {
+                        // if (instanceManager.getClass().getSimpleName().equals("XReactInstanceManagerImpl")) {
                             JSBundleLoader loader = JSBundleLoader.createFileLoader(mBundlePath);
                             Field jsBundleField = instanceManager.getClass().getDeclaredField("mBundleLoader");
                             jsBundleField.setAccessible(true);
                             jsBundleField.set(instanceManager, loader);
-                        } else {
-                            Field jsBundleField = instanceManager.getClass().getDeclaredField("mJSBundleFile");
-                            jsBundleField.setAccessible(true);
-                            jsBundleField.set(instanceManager, mBundlePath);
-                        }
+                        // } else {
+                        //     Field jsBundleField = instanceManager.getClass().getDeclaredField("mJSBundleFile");
+                        //     jsBundleField.setAccessible(true);
+                        //     jsBundleField.set(instanceManager, mBundlePath);
+                        // }
 
                         final Method recreateMethod = instanceManager.getClass().getMethod("recreateReactContextInBackground");
 
@@ -335,16 +335,16 @@ public class DoctorStrangeUpdaterModule extends ReactContextBaseJavaModule {
                             ReactInstanceManager instanceManager = ((ReactApplication) application).getReactNativeHost().getReactInstanceManager();
 
 
-                            if (instanceManager.getClass().getSimpleName().equals("XReactInstanceManagerImpl")) {
+                            // if (instanceManager.getClass().getSimpleName().equals("XReactInstanceManagerImpl")) {
                                 JSBundleLoader loader = JSBundleLoader.createFileLoader(bundlePath);
                                 Field jsBundleField = instanceManager.getClass().getDeclaredField("mBundleLoader");
                                 jsBundleField.setAccessible(true);
                                 jsBundleField.set(instanceManager, loader);
-                            } else {
-                                Field jsBundleField = instanceManager.getClass().getDeclaredField("mJSBundleFile");
-                                jsBundleField.setAccessible(true);
-                                jsBundleField.set(instanceManager, bundlePath);
-                            }
+                            // } else {
+                            //     Field jsBundleField = instanceManager.getClass().getDeclaredField("mJSBundleFile");
+                            //     jsBundleField.setAccessible(true);
+                            //     jsBundleField.set(instanceManager, bundlePath);
+                            // }
 
                             final Method recreateMethod = instanceManager.getClass().getMethod("recreateReactContextInBackground");
 

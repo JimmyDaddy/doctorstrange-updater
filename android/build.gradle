@@ -21,11 +21,11 @@ android {
         exclude 'META-INF/NOTICE.txt'
     }
 
-    sourceSets {
-        main {
-            jni.srcDirs = ["src/main/jni"]
-        }
-    }
+    // sourceSets {
+    //     main {
+    //         jni.srcDirs = ["src/main/jni"]
+    //     }
+    // }
 
 
 }
