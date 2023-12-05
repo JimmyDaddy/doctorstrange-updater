@@ -8,3 +8,5 @@ node_modules/.bin/
 node_modules/
 .DS_Store
 .vscode/
+yarn.lock
+package-lock.json

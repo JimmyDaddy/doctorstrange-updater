@@ -49,7 +49,6 @@ public class DoctorStrangeUpdater {
         this.context = context;
     }
 
-
     /*******************************
      * get app info method
      */
@@ -109,7 +108,6 @@ public class DoctorStrangeUpdater {
         }
     }
 
-
     /***********************************
      * sharedpreferences op method
      */
@@ -161,7 +159,6 @@ public class DoctorStrangeUpdater {
         }
     }
 
-
     /**
      *
      * @param jsonObject
@@ -173,7 +170,6 @@ public class DoctorStrangeUpdater {
 
         SharedPreferences preferences = this.context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
-
 
         while(iterator.hasNext()){
             String key = iterator.next();

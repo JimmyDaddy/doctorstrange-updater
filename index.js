@@ -12,13 +12,13 @@
 'use strict'
 
 import ReactNative, { NetInfo, Platform } from 'react-native'
+import 'whatwg-fetch'
 
 import Obj from './lib/obj'
-import 'whatwg-fetch'
 import Str from './lib/str'
 import FS from './lib/fs'
 
-let DoctorStrangeUpdaterModule = ReactNative.NativeModules.DoctorStrangeUpdater
+const DoctorStrangeUpdaterModule = ReactNative.NativeModules.DoctorStrangeUpdater
 
 /**
  * default value
@@ -269,8 +269,8 @@ class DoctorStrangeUpdater {
 
   downLoadPatch = () => {
     DoctorStrangeUpdaterModule.backUpVersion()
-        // 首先拷贝源文件
-    let tempDataFile = SOURCE_ROOT + '/temp.zip'
+    // 首先拷贝源文件
+    const tempDataFile = SOURCE_ROOT + '/temp.zip'
     FS.copyFile(SOURCE_ROOT + '/doctor.zip', tempDataFile).then((value) => {
       const progress = (data) => {
         const percentage = data.bytesWritten / 1024 / 1024
@@ -417,7 +417,7 @@ class DoctorStrangeUpdater {
   }
 }
 
-let reload = (err: Object) => {
+const reload = (err: Object) => {
   DoctorStrangeUpdater.getDoctorStrangeUpdater().reportError(err, 'firstLoad fail')
   DoctorStrangeUpdaterModule.getFirstLoad().then((obj) => {
         // 如果不是更新后第一次加载且第一次加载成功则按正常程序检查更新

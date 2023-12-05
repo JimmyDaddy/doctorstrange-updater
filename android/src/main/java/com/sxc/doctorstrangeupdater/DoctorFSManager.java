@@ -43,7 +43,6 @@ import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
 public class DoctorFSManager extends ReactContextBaseJavaModule {
 
-
         private static final String DocumentDirectoryPath = "DocumentDirectoryPath";
         private static final String ExternalDirectoryPath = "ExternalDirectoryPath";
         private static final String ExternalStorageDirectoryPath = "ExternalStorageDirectoryPath";

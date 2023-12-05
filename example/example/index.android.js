@@ -15,8 +15,6 @@ import {
 
 import DoctorstrangeUpdater from 'doctorstrange-updater';
 
-console.log(DoctorstrangeUpdater);
-
 export default class example extends Component {
 
     constructor(props){
@@ -28,7 +26,7 @@ export default class example extends Component {
     }
 
     componentDidMount() {
-        let updater = DoctorstrangeUpdater.getDoctorStrangeUpdater({
+        const updater = DoctorstrangeUpdater.getDoctorStrangeUpdater({
             DEBUG: __DEV__,
             debugVersionHost: 'http://192.168.0.146:3002/update/version/selectlatest',
             debugDownloadHost: 'http://192.168.0.146:3002/update/download',
